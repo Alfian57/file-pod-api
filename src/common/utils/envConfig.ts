@@ -15,6 +15,9 @@ const envSchema = z.object({
 	COMMON_RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().default(1000),
 
 	COMMON_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(1000),
+
+	JWT_SECRET: z.string().min(10, "JWT secret is required and should be a reasonably long string"),
+	JWT_EXPIRES_IN: z.string().default("1h"),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
@@ -26,6 +29,8 @@ if (!parsedEnv.success) {
 
 export const env = {
 	...parsedEnv.data,
+	// provide defaults when not set (useful for tests/dev)
+	JWT_SECRET: parsedEnv.data.JWT_SECRET ?? "dev-secret-change-me",
 	isDevelopment: parsedEnv.data.NODE_ENV === "development",
 	isProduction: parsedEnv.data.NODE_ENV === "production",
 	isTest: parsedEnv.data.NODE_ENV === "test",
