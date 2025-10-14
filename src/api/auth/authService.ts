@@ -28,11 +28,20 @@ export class AuthService {
             const passwordMatches = await bcrypt.compare(password, user.password);
             if (!passwordMatches) {
                 return ServiceResponse.failure("Invalid credentials", null, StatusCodes.UNAUTHORIZED);
-            }
+            }   
 
             const token = signJwt({ userId: user.id, email: user.email });
 
-            return ServiceResponse.success("Login successful", { token });
+            return ServiceResponse.success("Login successful", { 
+                token, 
+                user: {
+                    name: user.name,
+                    email: user.email,
+                    profilePictureUrl: user.profilePictureUrl,
+                    storageQuotaBytes: Number(user.storageQuotaBytes),
+                    storageUsedBytes: Number(user.storageUsedBytes),
+                }
+            });
         } catch (ex) {
             const errorMessage = `Error during login: ${(ex as Error).message}`;
             logger.error(errorMessage);

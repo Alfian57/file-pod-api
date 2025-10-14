@@ -20,6 +20,13 @@ export const RegisterRequestSchema = z.object({
 
 export const LoginResponseSchema = z.object({
     token: z.string(),
+    user: z.object({
+        name: z.string().optional(),
+        email: z.string().email(),
+        profilePictureUrl: z.string().url().optional(),
+        storageQuotaBytes: z.number().optional(),
+        storageUsedBytes: z.number().optional(),
+    }),
 });
 
 export const RegisterResponseDataSchema = z.null();
