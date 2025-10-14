@@ -5,7 +5,7 @@ import { AuthRepository } from "@/api/auth/authRepository";
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import { logger } from "@/server";
 import { signJwt } from "@/common/utils/jwt";
-import { LoginResponseData, RefreshTokenResponseData, RegisterResponseData } from "./authModel";
+import { LoginResponseData, LogoutResponseData, RefreshTokenResponseData, RegisterResponseData } from "./authModel";
 import { generateRefreshToken, getRefreshTokenExpiryDate } from "@/common/utils/refreshToken";
 
 export class AuthService {
@@ -103,6 +103,23 @@ export class AuthService {
             const errorMessage = `Error during refresh token: ${(ex as Error).message}`;
             logger.error(errorMessage);
             return ServiceResponse.failure("An error occurred during refresh token.", null, StatusCodes.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    async logout(token: string): Promise<ServiceResponse<LogoutResponseData | null>> {
+        try {
+            const existingRefreshToken = await this.authRepository.findRefreshToken(token);
+            if (!existingRefreshToken) {
+                return ServiceResponse.failure("Refresh token not found", null, StatusCodes.NOT_FOUND);
+            }
+
+            await this.authRepository.deleteRefreshToken(token);
+
+            return ServiceResponse.success("logout successful", null, StatusCodes.OK);
+        } catch (ex) {
+            const errorMessage = `Error during logout: ${(ex as Error).message}`;
+            logger.error(errorMessage);
+            return ServiceResponse.failure("An error occurred during logout.", null, StatusCodes.INTERNAL_SERVER_ERROR);
         }
     }
 }

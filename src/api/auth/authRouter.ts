@@ -1,6 +1,6 @@
 import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 import express, { type Router } from "express";
-import { LoginRequestSchema, RegisterRequestSchema, LoginResponseSchema, RegisterResponseDataSchema, RefreshTokenRequestSchema, RefreshTokenResponseSchema } from "./authModel";
+import { LoginRequestSchema, RegisterRequestSchema, LoginResponseSchema, RegisterResponseDataSchema, RefreshTokenRequestSchema, RefreshTokenResponseSchema, LogoutRequestSchema, LogoutResponseDataSchema } from "./authModel";
 import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
 import { validateRequest } from "@/common/utils/httpHandlers";
 import { authController } from "./authController";
@@ -44,3 +44,13 @@ authRegistry.registerPath({
     responses: createApiResponse(RefreshTokenResponseSchema, "Success", 200),
 });
 authRouter.post("/refresh-token", requireAuth, validateRequest(RefreshTokenRequestSchema), authController.refreshToken);
+
+authRegistry.registerPath({
+    method: "post",
+    path: "/api/auth/logout",
+    tags: ["Auth"],
+    security: [{ [bearerAuth.name]: [] }],
+    request: { body: { content: { "application/json": { schema: LogoutRequestSchema.shape.body } } } },
+    responses: createApiResponse(LogoutResponseDataSchema, "Success", 200),
+});
+authRouter.post("/logout", requireAuth, validateRequest(LogoutRequestSchema), authController.logout);
