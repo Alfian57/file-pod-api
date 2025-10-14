@@ -1,6 +1,7 @@
 {
 	"name": "file-pod-api",
 	"version": "1.0.0",
+	"type": "module",
 	"description": "A simple file storage API built with Express and TypeScript.",
 	"author": "Alfian Gading",
 	"repository": "Alfian57/file-pod-api.git",
@@ -72,5 +73,10 @@
 		"splitting": false,
 		"skipNodeModulesBundle": true
 	},
-	"packageManager": "npm@10.9.3"
+	"packageManager": "npm@10.9.3",
+	"lint-staged": {
+		"*.{ts,js,json}": [
+			"biome check --write"
+		]
+	}
 }

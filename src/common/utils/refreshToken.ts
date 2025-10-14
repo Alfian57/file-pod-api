@@ -1,4 +1,4 @@
-import crypto from "crypto";
+import crypto from "node:crypto";
 import ms from "ms";
 import { env } from "./envConfig";
 
