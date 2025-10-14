@@ -1,7 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 import bcrypt from "bcryptjs";
 
-import type { User } from "@/generated/prisma";
 import { AuthRepository } from "@/api/auth/authRepository";
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import { logger } from "@/server";
@@ -51,11 +50,9 @@ export class AuthService {
 
             const hashed = data.password ? await bcrypt.hash(data.password, 10) : undefined;
 
-            const created = await this.authRepository.createUser({ name: data.name, email: data.email, password: hashed });
+            await this.authRepository.createUser({ name: data.name, email: data.email, password: hashed });
 
-            const token = signJwt({ userId: created.id, email: created.email });
-
-            return ServiceResponse.success("Registration successful", { token });
+            return ServiceResponse.success("Registration successful", null, StatusCodes.CREATED);
         } catch (ex) {
             const errorMessage = `Error during registration: ${(ex as Error).message}`;
             logger.error(errorMessage);

@@ -21,6 +21,8 @@ CREATE TABLE "Folder" (
     "name" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "parentFolderId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Folder_pkey" PRIMARY KEY ("id")
 );
@@ -48,6 +50,7 @@ CREATE TABLE "SharedLink" (
     "folderId" TEXT,
     "password" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "SharedLink_pkey" PRIMARY KEY ("id")
 );
