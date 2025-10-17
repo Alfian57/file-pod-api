@@ -21,8 +21,6 @@ export const GetStorageResponseSchema = z.object({
 	files: z.array(FileSummarySchema),
 });
 
-
-export const GetStorageDetailResponseSchema = z.object({ 
-	folder: z.object({ id: z.string(),
-	name: z.string() }).nullable() 
+export const GetStorageDetailResponseSchema = z.object({
+	folder: z.object({ id: z.string(), name: z.string() }).nullable(),
 });

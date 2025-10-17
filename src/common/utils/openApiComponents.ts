@@ -1,4 +1,4 @@
-import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
+import type { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 
 /**
  * Register the reusable bearerAuth security scheme on a given OpenAPIRegistry.
@@ -6,13 +6,9 @@ import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
  * adding `security: [{ [name]: [] }]` to path definitions.
  */
 export function registerBearerAuth(registry: OpenAPIRegistry) {
-    return registry.registerComponent(
-        "securitySchemes",
-        "bearerAuth",
-        {
-            type: "http",
-            scheme: "bearer",
-            bearerFormat: "JWT",
-        }
-    );
+	return registry.registerComponent("securitySchemes", "bearerAuth", {
+		type: "http",
+		scheme: "bearer",
+		bearerFormat: "JWT",
+	});
 }

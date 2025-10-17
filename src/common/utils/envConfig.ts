@@ -19,7 +19,7 @@ const envSchema = z.object({
 	JWT_SECRET: z.string().min(10, "JWT secret is required and should be a reasonably long string"),
 
 	JWT_EXPIRES_IN: z.string().default("15m"),
-	
+
 	REFRESH_TOKEN_EXPIRES_IN: z.string().default("7d"),
 });
 
