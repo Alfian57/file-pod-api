@@ -7,6 +7,7 @@ import { signJwt } from "@/common/utils/jwt";
 import { generateRefreshToken, getRefreshTokenExpiryDate } from "@/common/utils/refreshToken";
 import { logger } from "@/server";
 import type {
+	GetCurrentUserResponseData,
 	LoginResponseData,
 	LogoutResponseData,
 	RefreshTokenResponseData,
@@ -81,6 +82,7 @@ export class AuthService {
 		}
 	}
 
+	// Refresh Token
 	async refreshToken(token: string): Promise<ServiceResponse<RefreshTokenResponseData | null>> {
 		try {
 			const existingRefreshToken = await this.authRepository.findRefreshToken(token);
@@ -115,6 +117,7 @@ export class AuthService {
 		}
 	}
 
+	// Logout
 	async logout(token: string): Promise<ServiceResponse<LogoutResponseData | null>> {
 		try {
 			const existingRefreshToken = await this.authRepository.findRefreshToken(token);
@@ -123,12 +126,37 @@ export class AuthService {
 			}
 
 			await this.authRepository.deleteRefreshToken(token);
-
 			return ServiceResponse.success("logout successful", null, StatusCodes.OK);
 		} catch (ex) {
 			const errorMessage = `Error during logout: ${(ex as Error).message}`;
 			logger.error(errorMessage);
 			return ServiceResponse.failure("An error occurred during logout.", null, StatusCodes.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	// Get Current User
+	async getCurrentUser(userId: string): Promise<ServiceResponse<GetCurrentUserResponseData | null>> {
+		try {
+			const user = await this.authRepository.findById(userId);
+			if (!user) {
+				return ServiceResponse.failure("User not found", null, StatusCodes.NOT_FOUND);
+			}
+
+			return ServiceResponse.success("User retrieved successfully", {
+				name: user.name ?? undefined,
+				email: user.email,
+				profilePictureUrl: user.profilePictureUrl ?? undefined,
+				storageQuotaBytes: Number(user.storageQuotaBytes),
+				storageUsedBytes: Number(user.storageUsedBytes),
+			});
+		} catch (ex) {
+			const errorMessage = `Error during get current user: ${(ex as Error).message}`;
+			logger.error(errorMessage);
+			return ServiceResponse.failure(
+				"An error occurred while retrieving the user.",
+				null,
+				StatusCodes.INTERNAL_SERVER_ERROR,
+			);
 		}
 	}
 }

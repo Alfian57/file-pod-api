@@ -54,3 +54,16 @@ export const LogoutRequestSchema = z.object({
 });
 export const LogoutResponseDataSchema = z.null();
 export type LogoutResponseData = z.infer<typeof LogoutResponseDataSchema>;
+
+// Get Current User
+export const GetCurrentUserRequestSchema = z.object({
+	body: z.object({}),
+});
+export const GetCurrentUserResponseSchema = z.object({
+	name: z.string().optional(),
+	email: z.string().email(),
+	profilePictureUrl: z.string().url().optional(),
+	storageQuotaBytes: z.number().optional(),
+	storageUsedBytes: z.number().optional(),
+});
+export type GetCurrentUserResponseData = z.infer<typeof GetCurrentUserResponseSchema>;

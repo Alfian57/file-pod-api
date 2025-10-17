@@ -7,6 +7,11 @@ import { registerBearerAuth } from "@/common/utils/openApiComponents";
 import { storageRegistry } from "../storage/storageRouter";
 import { authController } from "./authController";
 import {
+<<<<<<< HEAD
+=======
+	GetCurrentUserRequestSchema,
+	GetCurrentUserResponseSchema,
+>>>>>>> 02fa84f (feat: get user feature)
 	LoginRequestSchema,
 	LoginResponseSchema,
 	LogoutRequestSchema,
@@ -63,3 +68,13 @@ authRegistry.registerPath({
 	responses: createApiResponse(LogoutResponseDataSchema, "Success", 200),
 });
 authRouter.post("/logout", requireAuth, validateRequest(LogoutRequestSchema), authController.logout);
+
+authRegistry.registerPath({
+	method: "post",
+	path: "/api/auth/user",
+	tags: ["Auth"],
+	security: [{ [bearerAuth.name]: [] }],
+	request: { body: { content: { "application/json": { schema: GetCurrentUserRequestSchema.shape.body } } } },
+	responses: createApiResponse(GetCurrentUserResponseSchema, "Success", 200),
+});
+authRouter.post("/user", requireAuth, validateRequest(GetCurrentUserRequestSchema), authController.getCurrentUser);
