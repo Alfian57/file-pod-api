@@ -7,11 +7,8 @@ import { registerBearerAuth } from "@/common/utils/openApiComponents";
 import { storageRegistry } from "../storage/storageRouter";
 import { authController } from "./authController";
 import {
-<<<<<<< HEAD
-=======
 	GetCurrentUserRequestSchema,
 	GetCurrentUserResponseSchema,
->>>>>>> 02fa84f (feat: get user feature)
 	LoginRequestSchema,
 	LoginResponseSchema,
 	LogoutRequestSchema,
