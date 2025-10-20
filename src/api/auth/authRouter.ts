@@ -11,7 +11,6 @@ import {
 	GetCurrentUserResponseSchema,
 	LoginRequestSchema,
 	LoginResponseSchema,
-	LogoutRequestSchema,
 	LogoutResponseDataSchema,
 	RefreshTokenRequestSchema,
 	RefreshTokenResponseSchema,
@@ -61,10 +60,9 @@ authRegistry.registerPath({
 	path: "/api/auth/logout",
 	tags: ["Auth"],
 	security: [{ [bearerAuth.name]: [] }],
-	request: { body: { content: { "application/json": { schema: LogoutRequestSchema.shape.body } } } },
 	responses: createApiResponse(LogoutResponseDataSchema, "Success", 200),
 });
-authRouter.post("/logout", requireAuth, validateRequest(LogoutRequestSchema), authController.logout);
+authRouter.post("/logout", requireAuth, authController.logout);
 
 authRegistry.registerPath({
 	method: "post",
