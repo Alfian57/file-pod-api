@@ -73,9 +73,12 @@ storageRegistry.registerPath({
 						type: "object",
 						properties: {
 							folderId: { type: "string", format: "uuid" },
-							file: { type: "string", format: "binary" },
+							files: {
+								type: "array",
+								items: { type: "string", format: "binary" },
+							},
 						},
-						required: ["file"],
+						required: ["files"],
 					},
 				},
 			},
@@ -86,7 +89,7 @@ storageRegistry.registerPath({
 storageRouter.post(
 	"/upload",
 	requireAuth,
-	upload.single("file"),
+	upload.array("files"),
 	validateRequest(UploadFileRequestSchema),
 	storageController.uploadFile,
 );

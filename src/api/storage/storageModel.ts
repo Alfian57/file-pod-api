@@ -43,12 +43,5 @@ export const UploadFileRequestSchema = z.object({
 		}, z.string().uuid().nullable()),
 	}),
 });
-export const UploadFileResponseSchema = z.object({
-	id: z.string(),
-	originalName: z.string(),
-	filename: z.string(),
-	mimeType: z.string(),
-	sizeBytes: z.string(),
-	createdAt: z.string(),
-});
+export const UploadFileResponseSchema = z.null();
 export type UploadFileResponseData = z.infer<typeof UploadFileResponseSchema>;

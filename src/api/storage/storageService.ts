@@ -2,7 +2,6 @@ import { StatusCodes } from "http-status-codes";
 
 import { StorageRepository } from "@/api/storage/storageRepository";
 import { ServiceResponse } from "@/common/models/serviceResponse";
-import type { File } from "@/generated/prisma";
 import { logger } from "@/server";
 import type { GetStorageDetailResponseData, GetStorageResponseData, UploadFileResponseData } from "./storageModel";
 
@@ -69,10 +68,13 @@ export class StorageService {
 	async uploadFile(
 		userId: string,
 		folderId: string | null,
-		originalName: string,
-		filename: string,
-		mimeType: string,
-		sizeBytes: bigint,
+		files: {
+			originalName: string;
+			filename: string;
+			mimeType: string;
+			size: number;
+			sizeBytes: bigint;
+		}[],
 	): Promise<ServiceResponse<UploadFileResponseData | null>> {
 		try {
 			const folder = folderId ? await this.storageRepository.findFolderById(folderId) : null;
@@ -80,27 +82,20 @@ export class StorageService {
 				return ServiceResponse.failure("Folder not found", null, StatusCodes.NOT_FOUND);
 			}
 
-			const newFile: File = await this.storageRepository.uploadFile(
-				userId,
-				folder ? folder.id : null,
-				originalName,
-				filename,
-				mimeType,
-				sizeBytes,
-			);
+			files.forEach(async (file) => {
+				const { originalName, filename, mimeType, sizeBytes } = file;
+				await this.storageRepository.uploadFile(
+					userId,
+					folder ? folder.id : null,
+					originalName,
+					filename,
+					mimeType,
+					sizeBytes,
+				);
+				await this.storageRepository.updateUserUsedStorageBytes(userId, sizeBytes);
+			});
 
-			await this.storageRepository.updateUserUsedStorageBytes(userId, sizeBytes);
-
-			const response = {
-				id: newFile.id,
-				originalName: newFile.originalName,
-				filename: newFile.filename,
-				mimeType: newFile.mimeType,
-				sizeBytes: String(newFile.sizeBytes),
-				createdAt: newFile.createdAt.toISOString(),
-			};
-
-			return ServiceResponse.success("File uploaded", response, StatusCodes.CREATED);
+			return ServiceResponse.success("File uploaded", null, StatusCodes.CREATED);
 		} catch (ex) {
 			const errorMessage = `Error uploading file: ${(ex as Error).message}`;
 			logger.error(errorMessage);

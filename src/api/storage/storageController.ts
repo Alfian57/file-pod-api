@@ -22,21 +22,24 @@ class StorageController {
 		const userId = req.user?.userId;
 		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
 		const { folderId } = req.body;
-		const fileObj = req.file;
+		const files = req.files;
 
-		if (!fileObj) {
+		if (!files) {
 			logger.error(`No file uploaded by user ${userId}`);
 			return res.status(400).send({ message: "No file uploaded", data: null });
 		}
 
-		const svcResponse = await storageService.uploadFile(
-			userId,
-			folderId,
-			fileObj.originalname,
-			fileObj.filename,
-			fileObj.mimetype,
-			BigInt(fileObj.size),
-		);
+		const fileArray = (Array.isArray(files) ? files : [files]) as Express.Multer.File[];
+
+		const uploadedFiles = fileArray.map((file) => ({
+			originalName: file.originalname,
+			filename: file.filename,
+			mimeType: file.mimetype,
+			size: file.size,
+			sizeBytes: BigInt(Number(file.size)),
+		}));
+
+		const svcResponse = await storageService.uploadFile(userId, folderId, uploadedFiles);
 		return res.status(svcResponse.statusCode ?? 500).send(svcResponse);
 	};
 }
