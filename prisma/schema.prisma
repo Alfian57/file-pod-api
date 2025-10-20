@@ -62,20 +62,21 @@ model Folder {
 }
 
 model File {
-  id          String      @id @default(uuid())
-  userId      String
-  folderId    String?
-  name        String
-  mimeType    String
-  sizeBytes   BigInt
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id            String      @id @default(uuid())
+  userId        String
+  folderId      String?
+  originalName  String
+  filename      String
+  mimeType      String
+  sizeBytes     BigInt
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   folder      Folder?     @relation(fields: [folderId], references: [id], onDelete: Cascade)
   sharedLinks SharedLink[]
 
-  @@unique([userId, folderId, name])
+  @@unique([userId, folderId, filename])
 }
 
 model SharedLink {

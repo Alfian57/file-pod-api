@@ -1,5 +1,4 @@
 import type { Request, RequestHandler, Response } from "express";
-import { normalizeFolderId, saveMulterFile } from "@/common/services/uploaderService";
 import { logger } from "@/server";
 import { storageService } from "./storageService";
 
@@ -22,31 +21,23 @@ class StorageController {
 	public uploadFile: RequestHandler = async (req: Request, res: Response) => {
 		const userId = req.user?.userId;
 		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
+		const { folderId } = req.body;
+		const fileObj = req.file;
 
-		const fileObj = (req as unknown as { file?: Express.Multer.File }).file;
-		const rawFolderId = (req.body as { folderId?: string | null }).folderId;
-
-		try {
-			const saved = await saveMulterFile(fileObj);
-
-			const folderId = normalizeFolderId(rawFolderId);
-			const svcResponse = await storageService.uploadFile(
-				String(userId),
-				folderId,
-				saved.finalName,
-				fileObj?.mimetype || "application/octet-stream",
-				saved.size,
-			);
-			return res.status(svcResponse.statusCode ?? 500).send(svcResponse);
-		} catch (ex) {
-			if (ex instanceof Error) {
-				logger.error(`Upload error: ${ex.message}\n${ex.stack}`);
-			} else {
-				logger.error(`Upload error: ${String(ex)}`);
-			}
-
-			return res.status(500).send({ message: "An error occurred uploading file", data: null });
+		if (!fileObj) {
+			logger.error(`No file uploaded by user ${userId}`);
+			return res.status(400).send({ message: "No file uploaded", data: null });
 		}
+
+		const svcResponse = await storageService.uploadFile(
+			userId,
+			folderId,
+			fileObj.originalname,
+			fileObj.filename,
+			fileObj.mimetype,
+			BigInt(fileObj.size),
+		);
+		return res.status(svcResponse.statusCode ?? 500).send(svcResponse);
 	};
 }
 

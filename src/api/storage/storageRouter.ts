@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 import express, { type Router } from "express";
 import multer from "multer";
@@ -20,7 +21,20 @@ export const storageRouter: Router = express.Router();
 storageRegistry.register("Upload File", UploadFileRequestSchema);
 
 const bearerAuth = registerBearerAuth(storageRegistry);
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+	storage: multer.diskStorage({
+		destination: (_req, _file, cb) => {
+			const dir = "uploads";
+			if (!fs.existsSync(dir)) {
+				fs.mkdirSync(dir);
+			}
+			cb(null, dir);
+		},
+		filename: (_req, file, cb) => {
+			cb(null, `${Date.now()}-${file.originalname}`);
+		},
+	}),
+});
 
 storageRegistry.registerPath({
 	method: "get",

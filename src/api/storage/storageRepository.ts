@@ -45,20 +45,32 @@ export class StorageRepository {
 	async uploadFile(
 		userId: string,
 		folderId: string | null,
-		name: string,
+		originalName: string,
+		filename: string,
 		mimeType: string,
-		sizeBytes: number | bigint,
+		sizeBytes: bigint,
 	): Promise<File> {
-		const sizeBigInt = typeof sizeBytes === "bigint" ? sizeBytes : BigInt(Math.floor(sizeBytes as number));
 		const newFile = await prisma.file.create({
 			data: {
 				userId,
 				folderId,
-				name,
+				originalName,
+				filename,
 				mimeType,
-				sizeBytes: sizeBigInt,
+				sizeBytes,
 			},
 		});
 		return newFile;
+	}
+
+	async updateUserUsedStorageBytes(userId: string, sizeBytes: bigint): Promise<void> {
+		await prisma.user.update({
+			where: { id: userId },
+			data: {
+				storageUsedBytes: {
+					increment: sizeBytes,
+				},
+			},
+		});
 	}
 }

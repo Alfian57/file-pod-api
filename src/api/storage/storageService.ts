@@ -4,7 +4,7 @@ import { StorageRepository } from "@/api/storage/storageRepository";
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import type { File } from "@/generated/prisma";
 import { logger } from "@/server";
-import type { RootStorage } from "./storageModel";
+import type { GetStorageDetailResponseData, GetStorageResponseData, UploadFileResponseData } from "./storageModel";
 
 export class StorageService {
 	private storageRepository: StorageRepository;
@@ -14,7 +14,7 @@ export class StorageService {
 	}
 
 	// Get list of root folders and files for an authenticated user
-	async getStorage(userId: string): Promise<ServiceResponse<RootStorage | null>> {
+	async getStorage(userId: string): Promise<ServiceResponse<GetStorageResponseData | null>> {
 		try {
 			const result = await this.storageRepository.findStorageByUserId(userId);
 
@@ -22,7 +22,8 @@ export class StorageService {
 				folders: result.folders.map((f) => ({ id: f.id, name: f.name, createdAt: f.createdAt.toISOString() })),
 				files: result.files.map((fi) => ({
 					id: fi.id,
-					name: fi.name,
+					originalName: fi.originalName,
+					filename: fi.filename,
 					mimeType: fi.mimeType,
 					sizeBytes: fi.sizeBytes != null ? String(fi.sizeBytes) : null,
 					createdAt: fi.createdAt.toISOString(),
@@ -38,14 +39,15 @@ export class StorageService {
 	}
 
 	// Get folder detail by id
-	async getStorageDetail(id: string): Promise<ServiceResponse<RootStorage | null>> {
+	async getStorageDetail(id: string): Promise<ServiceResponse<GetStorageDetailResponseData | null>> {
 		try {
 			const result = await this.storageRepository.findStorageByIdWithContent(id);
 			const mapped = {
 				folders: result.folders.map((f) => ({ id: f.id, name: f.name, createdAt: f.createdAt.toISOString() })),
 				files: result.files.map((fi) => ({
 					id: fi.id,
-					name: fi.name,
+					originalName: fi.originalName,
+					filename: fi.filename,
 					mimeType: fi.mimeType,
 					sizeBytes: fi.sizeBytes != null ? String(fi.sizeBytes) : null,
 					createdAt: fi.createdAt.toISOString(),
@@ -67,32 +69,35 @@ export class StorageService {
 	async uploadFile(
 		userId: string,
 		folderId: string | null,
-		name: string,
+		originalName: string,
+		filename: string,
 		mimeType: string,
-		sizeBytes: number | bigint,
-	): Promise<ServiceResponse<Record<string, unknown> | null>> {
+		sizeBytes: bigint,
+	): Promise<ServiceResponse<UploadFileResponseData | null>> {
 		try {
 			const folder = folderId ? await this.storageRepository.findFolderById(folderId) : null;
 			if (folderId && !folder) {
 				return ServiceResponse.failure("Folder not found", null, StatusCodes.NOT_FOUND);
 			}
 
-			const created: File = await this.storageRepository.uploadFile(
+			const newFile: File = await this.storageRepository.uploadFile(
 				userId,
-				folderId ?? null,
-				name,
+				folder ? folder.id : null,
+				originalName,
+				filename,
 				mimeType,
 				sizeBytes,
 			);
 
+			await this.storageRepository.updateUserUsedStorageBytes(userId, sizeBytes);
+
 			const response = {
-				id: created.id,
-				userId: created.userId,
-				folderId: created.folderId,
-				name: created.name,
-				mimeType: created.mimeType,
-				sizeBytes: String(created.sizeBytes),
-				createdAt: created.createdAt.toISOString(),
+				id: newFile.id,
+				originalName: newFile.originalName,
+				filename: newFile.filename,
+				mimeType: newFile.mimeType,
+				sizeBytes: String(newFile.sizeBytes),
+				createdAt: newFile.createdAt.toISOString(),
 			};
 
 			return ServiceResponse.success("File uploaded", response, StatusCodes.CREATED);

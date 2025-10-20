@@ -6,7 +6,8 @@ extendZodWithOpenApi(z);
 // General response schemas
 export const FileSummarySchema = z.object({
 	id: z.string(),
-	name: z.string(),
+	originalName: z.string(),
+	filename: z.string(),
 	mimeType: z.string(),
 	sizeBytes: z.string().nullable(),
 	createdAt: z.string(),
@@ -16,22 +17,22 @@ export type FileSummary = z.infer<typeof FileSummarySchema>;
 export const FolderSummarySchema = z.object({ id: z.string(), name: z.string(), createdAt: z.string() });
 export type FolderSummary = z.infer<typeof FolderSummarySchema>;
 
-export const RootStorageSchema = z.object({ folders: z.array(FolderSummarySchema), files: z.array(FileSummarySchema) });
-export type RootStorage = z.infer<typeof RootStorageSchema>;
-
 // Get Storage
 export const GetStorageResponseSchema = z.object({
 	folders: z.array(FolderSummarySchema),
 	files: z.array(FileSummarySchema),
 });
+export type GetStorageResponseData = z.infer<typeof GetStorageResponseSchema>;
 
 // Get Storage Detail
 export const GetStorageDetailRequestSchema = z.object({
 	params: z.object({ id: z.string().uuid() }),
 });
 export const GetStorageDetailResponseSchema = z.object({
-	folder: z.object({ id: z.string(), name: z.string() }).nullable(),
+	folders: z.array(FolderSummarySchema),
+	files: z.array(FileSummarySchema),
 });
+export type GetStorageDetailResponseData = z.infer<typeof GetStorageDetailResponseSchema>;
 
 // Upload File
 export const UploadFileRequestSchema = z.object({
@@ -44,10 +45,10 @@ export const UploadFileRequestSchema = z.object({
 });
 export const UploadFileResponseSchema = z.object({
 	id: z.string(),
-	userId: z.string(),
-	folderId: z.string().nullable(),
-	name: z.string(),
+	originalName: z.string(),
+	filename: z.string(),
 	mimeType: z.string(),
 	sizeBytes: z.string(),
+	createdAt: z.string(),
 });
 export type UploadFileResponseData = z.infer<typeof UploadFileResponseSchema>;
