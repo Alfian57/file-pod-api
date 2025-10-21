@@ -53,8 +53,15 @@ export class StorageRepository {
 		return folder;
 	}
 
-	// Upload file to a folder
-	async uploadFile(
+	// Delete folder by id
+	async deleteFolderById(id: string): Promise<void> {
+		await prisma.folder.delete({
+			where: { id },
+		});
+	}
+
+	// Create file to a folder
+	async createFile(
 		userId: string,
 		folderId: string | null,
 		originalName: string,
@@ -73,6 +80,28 @@ export class StorageRepository {
 			},
 		});
 		return newFile;
+	}
+
+	// Return file by id
+	async findFileById(id: string): Promise<File | null> {
+		const file = await prisma.file.findUnique({
+			where: { id },
+		});
+		return file;
+	}
+
+	// Delete file by id
+	async deleteFileById(id: string): Promise<void> {
+		await prisma.file.delete({
+			where: { id },
+		});
+	}
+
+	// Delete file by folder id
+	async deleteFilesByFolderId(folderId: string): Promise<void> {
+		await prisma.file.deleteMany({
+			where: { folderId },
+		});
 	}
 
 	// Update user's used storage bytes

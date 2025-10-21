@@ -10,7 +10,7 @@
 	"scripts": {
 		"build": "tsc && tsup",
 		"start:dev": "tsx watch src/index.ts",
-		"start:prod": "node dist/index.js",
+		"start:prod": "node dist/index.cjs",
 		"check": "biome check --write",
 		"test": "vitest run",
 		"test:cov": "vitest run --coverage",

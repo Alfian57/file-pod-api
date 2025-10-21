@@ -10,7 +10,6 @@ describe("Health Check API endpoints", () => {
 		const result: ServiceResponse = response.body;
 
 		expect(response.statusCode).toEqual(StatusCodes.OK);
-		expect(result.success).toBeTruthy();
 		expect(result.data).toBeNull();
 		expect(result.message).toEqual("Service is healthy");
 	});

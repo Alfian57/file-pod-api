@@ -27,6 +27,15 @@ class StorageController {
 		return res.status(serviceResponse.statusCode).send(serviceResponse);
 	};
 
+	public deleteFolder: RequestHandler = async (req: Request, res: Response) => {
+		const userId = req.user?.userId;
+		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
+		const { id } = req.params;
+
+		const serviceResponse = await storageService.deleteFolder(id);
+		return res.status(serviceResponse.statusCode).send(serviceResponse);
+	};
+
 	public uploadFile: RequestHandler = async (req: Request, res: Response) => {
 		const userId = req.user?.userId;
 		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
@@ -42,6 +51,15 @@ class StorageController {
 
 		const svcResponse = await storageService.uploadFile(userId, folderId, fileArray);
 		return res.status(svcResponse.statusCode ?? 500).send(svcResponse);
+	};
+
+	public deleteFile: RequestHandler = async (req: Request, res: Response) => {
+		const userId = req.user?.userId;
+		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
+		const { id } = req.params;
+
+		const serviceResponse = await storageService.deleteFile(id);
+		return res.status(serviceResponse.statusCode).send(serviceResponse);
 	};
 }
 

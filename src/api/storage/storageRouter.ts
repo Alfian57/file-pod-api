@@ -9,6 +9,10 @@ import { storageController } from "./storageController";
 import {
 	CreateFolderRequestSchema,
 	CreateFolderResponseSchema,
+	DeleteFileRequestSchema,
+	DeleteFileResponseSchema,
+	DeleteFolderRequestSchema,
+	DeleteFolderResponseSchema,
 	GetStorageDetailRequestSchema,
 	GetStorageDetailResponseSchema,
 	GetStorageResponseSchema,
@@ -41,7 +45,7 @@ storageRouter.get("/", requireAuth, storageController.getStorage);
 // Get user's folder and files on specific folder
 storageRegistry.registerPath({
 	method: "get",
-	path: "/api/my-storage/:id",
+	path: "/api/my-storage/{id}",
 	tags: ["Storage"],
 	security: [{ [bearerAuth.name]: [] }],
 	request: { params: GetStorageDetailRequestSchema.shape.params },
@@ -65,6 +69,22 @@ storageRegistry.registerPath({
 });
 storageRouter.post("/folder", requireAuth, validateRequest(CreateFolderRequestSchema), storageController.createFolder);
 
+// Delete folder from user's storage
+storageRegistry.registerPath({
+	method: "delete",
+	path: "/api/my-storage/folder/{id}",
+	tags: ["Storage"],
+	security: [{ [bearerAuth.name]: [] }],
+	request: { params: DeleteFolderRequestSchema.shape.params },
+	responses: createApiResponse(DeleteFolderResponseSchema, "Success"),
+});
+storageRouter.delete(
+	"/folder/:id",
+	requireAuth,
+	validateRequest(DeleteFolderRequestSchema),
+	storageController.deleteFolder,
+);
+
 // Upload file to user's storage
 storageRegistry.registerPath({
 	method: "post",
@@ -75,7 +95,17 @@ storageRegistry.registerPath({
 		body: {
 			content: {
 				"multipart/form-data": {
-					schema: UploadFileRequestSchema,
+					schema: {
+						type: "object",
+						properties: {
+							folderId: { type: "string", format: "uuid" },
+							files: {
+								type: "array",
+								items: { type: "string", format: "binary" },
+							},
+						},
+						required: ["files"],
+					},
 				},
 			},
 		},
@@ -89,3 +119,14 @@ storageRouter.post(
 	validateRequest(UploadFileRequestSchema),
 	storageController.uploadFile,
 );
+
+// Delete file from user's storage
+storageRegistry.registerPath({
+	method: "delete",
+	path: "/api/my-storage/file/{id}",
+	tags: ["Storage"],
+	security: [{ [bearerAuth.name]: [] }],
+	request: { params: DeleteFileRequestSchema.shape.params },
+	responses: createApiResponse(DeleteFileResponseSchema, "Success"),
+});
+storageRouter.delete("/file/:id", requireAuth, validateRequest(DeleteFileRequestSchema), storageController.deleteFile);
