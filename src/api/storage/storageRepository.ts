@@ -33,6 +33,18 @@ export class StorageRepository {
 		return { folders, files };
 	}
 
+	// Create new folder
+	async createFolder(userId: string, name: string, parentFolderId: string | null): Promise<Folder> {
+		const newFolder = await prisma.folder.create({
+			data: {
+				userId,
+				name,
+				parentFolderId,
+			},
+		});
+		return newFolder;
+	}
+
 	// Return folder by id
 	async findFolderById(id: string): Promise<Folder | null> {
 		const folder = await prisma.folder.findUnique({

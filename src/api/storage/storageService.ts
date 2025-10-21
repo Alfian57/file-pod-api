@@ -5,7 +5,12 @@ import { minioClient } from "@/common/lib/minio";
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import { env } from "@/common/utils/envConfig";
 import { logger } from "@/server";
-import type { GetStorageDetailResponseData, GetStorageResponseData, UploadFileResponseData } from "./storageModel";
+import type {
+	CreateFolderResponseData,
+	GetStorageDetailResponseData,
+	GetStorageResponseData,
+	UploadFileResponseData,
+} from "./storageModel";
 
 export class StorageService {
 	private storageRepository: StorageRepository;
@@ -61,6 +66,34 @@ export class StorageService {
 				null,
 				StatusCodes.INTERNAL_SERVER_ERROR,
 			);
+		}
+	}
+
+	async createFolder(
+		userId: string,
+		name: string,
+		parentFolderId: string | null,
+	): Promise<ServiceResponse<CreateFolderResponseData | null>> {
+		try {
+			// Normalize parentFolderId: convert empty string, "null", or undefined to actual null
+			const normalizedParentId =
+				parentFolderId === "" || parentFolderId === "null" || typeof parentFolderId === "undefined"
+					? null
+					: parentFolderId;
+
+			if (normalizedParentId) {
+				const parentFolder = await this.storageRepository.findFolderById(normalizedParentId);
+				if (!parentFolder) {
+					return ServiceResponse.failure("Parent folder not found", null, StatusCodes.NOT_FOUND);
+				}
+			}
+
+			await this.storageRepository.createFolder(userId, name, normalizedParentId);
+			return ServiceResponse.success("Folder created", null, StatusCodes.CREATED);
+		} catch (ex) {
+			const errorMessage = `Error creating folder: ${(ex as Error).message}`;
+			logger.error(errorMessage);
+			return ServiceResponse.failure("An error occurred creating folder.", null, StatusCodes.INTERNAL_SERVER_ERROR);
 		}
 	}
 

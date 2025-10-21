@@ -35,6 +35,30 @@ export const GetStorageDetailResponseSchema = z.object({
 });
 export type GetStorageDetailResponseData = z.infer<typeof GetStorageDetailResponseSchema>;
 
+// Create Folder
+export const CreateFolderOpenApiSchema = {
+	type: "object",
+	properties: {
+		folderId: { type: "string", format: "uuid" },
+		files: {
+			type: "array",
+			items: { type: "string", format: "binary" },
+		},
+	},
+	required: ["files"],
+};
+export const CreateFolderRequestSchema = z.object({
+	body: z.object({
+		name: z.string().min(1, "Folder name is required"),
+		parentFolderId: z.preprocess((v) => {
+			if (v === "" || v === "null" || v === null || typeof v === "undefined") return null;
+			return v;
+		}, z.string().uuid().nullable()),
+	}),
+});
+export const CreateFolderResponseSchema = z.null();
+export type CreateFolderResponseData = z.infer<typeof CreateFolderResponseSchema>;
+
 // Upload File
 export const UploadFileRequestSchema = z.object({
 	body: z.object({

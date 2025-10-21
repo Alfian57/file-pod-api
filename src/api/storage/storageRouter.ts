@@ -7,6 +7,8 @@ import { validateRequest } from "@/common/utils/httpHandlers";
 import { registerBearerAuth } from "@/common/utils/openApiComponents";
 import { storageController } from "./storageController";
 import {
+	CreateFolderRequestSchema,
+	CreateFolderResponseSchema,
 	GetStorageDetailRequestSchema,
 	GetStorageDetailResponseSchema,
 	GetStorageResponseSchema,
@@ -18,7 +20,10 @@ export const storageRegistry = new OpenAPIRegistry();
 export const storageRouter: Router = express.Router();
 
 // Register schemas
-storageRegistry.register("Upload File", UploadFileRequestSchema);
+storageRegistry.register("Upload File Request", UploadFileRequestSchema);
+storageRegistry.register("Create Folder Request", CreateFolderRequestSchema);
+storageRegistry.register("Get Storage Response", GetStorageResponseSchema);
+storageRegistry.register("Get Storage Detail Response", GetStorageDetailResponseSchema);
 
 // Bearer Auth
 const bearerAuth = registerBearerAuth(storageRegistry);
@@ -49,6 +54,17 @@ storageRouter.get(
 	storageController.getStorageDetail,
 );
 
+// Create new folder in user's storage
+storageRegistry.registerPath({
+	method: "post",
+	path: "/api/my-storage/folder",
+	tags: ["Storage"],
+	security: [{ [bearerAuth.name]: [] }],
+	request: { body: { content: { "application/json": { schema: CreateFolderRequestSchema.shape.body } } } },
+	responses: createApiResponse(CreateFolderResponseSchema, "Success"),
+});
+storageRouter.post("/folder", requireAuth, validateRequest(CreateFolderRequestSchema), storageController.createFolder);
+
 // Upload file to user's storage
 storageRegistry.registerPath({
 	method: "post",
@@ -59,17 +75,7 @@ storageRegistry.registerPath({
 		body: {
 			content: {
 				"multipart/form-data": {
-					schema: {
-						type: "object",
-						properties: {
-							folderId: { type: "string", format: "uuid" },
-							files: {
-								type: "array",
-								items: { type: "string", format: "binary" },
-							},
-						},
-						required: ["files"],
-					},
+					schema: UploadFileRequestSchema,
 				},
 			},
 		},
