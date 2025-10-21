@@ -1,7 +1,9 @@
 import { StatusCodes } from "http-status-codes";
 
 import { StorageRepository } from "@/api/storage/storageRepository";
+import { minioClient } from "@/common/lib/minio";
 import { ServiceResponse } from "@/common/models/serviceResponse";
+import { env } from "@/common/utils/envConfig";
 import { logger } from "@/server";
 import type { GetStorageDetailResponseData, GetStorageResponseData, UploadFileResponseData } from "./storageModel";
 
@@ -68,13 +70,7 @@ export class StorageService {
 	async uploadFile(
 		userId: string,
 		folderId: string | null,
-		files: {
-			originalName: string;
-			filename: string;
-			mimeType: string;
-			size: number;
-			sizeBytes: bigint;
-		}[],
+		files: Express.Multer.File[],
 	): Promise<ServiceResponse<UploadFileResponseData | null>> {
 		try {
 			const folder = folderId ? await this.storageRepository.findFolderById(folderId) : null;
@@ -82,18 +78,22 @@ export class StorageService {
 				return ServiceResponse.failure("Folder not found", null, StatusCodes.NOT_FOUND);
 			}
 
-			files.forEach(async (file) => {
-				const { originalName, filename, mimeType, sizeBytes } = file;
+			const uploadPromises = files.map(async (file) => {
+				const { originalname: originalName, mimetype: mimeType, size: sizeBytes } = file;
+				const filename = `${userId}/${Date.now()}-${originalName}`;
+
 				await this.storageRepository.uploadFile(
 					userId,
 					folder ? folder.id : null,
 					originalName,
 					filename,
 					mimeType,
-					sizeBytes,
+					BigInt(sizeBytes),
 				);
-				await this.storageRepository.updateUserUsedStorageBytes(userId, sizeBytes);
+				await this.storageRepository.updateUserUsedStorageBytes(userId, BigInt(sizeBytes));
+				await minioClient.putObject(env.MINIO_BUCKET_NAME, filename, file.buffer);
 			});
+			await Promise.all(uploadPromises);
 
 			return ServiceResponse.success("File uploaded", null, StatusCodes.CREATED);
 		} catch (ex) {

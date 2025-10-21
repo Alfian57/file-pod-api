@@ -31,15 +31,7 @@ class StorageController {
 
 		const fileArray = (Array.isArray(files) ? files : [files]) as Express.Multer.File[];
 
-		const uploadedFiles = fileArray.map((file) => ({
-			originalName: file.originalname,
-			filename: file.filename,
-			mimeType: file.mimetype,
-			size: file.size,
-			sizeBytes: BigInt(Number(file.size)),
-		}));
-
-		const svcResponse = await storageService.uploadFile(userId, folderId, uploadedFiles);
+		const svcResponse = await storageService.uploadFile(userId, folderId, fileArray);
 		return res.status(svcResponse.statusCode ?? 500).send(svcResponse);
 	};
 }
