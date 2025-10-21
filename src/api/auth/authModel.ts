@@ -31,8 +31,8 @@ export const RegisterRequestSchema = z.object({
 		password: z.string().min(6, "Password must be at least 6 characters"),
 	}),
 });
-export const RegisterResponseDataSchema = z.null();
-export type RegisterResponseData = z.infer<typeof RegisterResponseDataSchema>;
+export const RegisterResponseSchema = z.null();
+export type RegisterResponseData = z.infer<typeof RegisterResponseSchema>;
 
 // Refresh Token
 export const RefreshTokenRequestSchema = z.object({
@@ -52,13 +52,10 @@ export const LogoutRequestSchema = z.object({
 		refreshToken: z.string().min(1, "Refresh token is required"),
 	}),
 });
-export const LogoutResponseDataSchema = z.null();
-export type LogoutResponseData = z.infer<typeof LogoutResponseDataSchema>;
+export const LogoutResponseSchema = z.null();
+export type LogoutResponseData = z.infer<typeof LogoutResponseSchema>;
 
 // Get Current User
-export const GetCurrentUserRequestSchema = z.object({
-	body: z.object({}),
-});
 export const GetCurrentUserResponseSchema = z.object({
 	name: z.string().optional(),
 	email: z.string().email(),

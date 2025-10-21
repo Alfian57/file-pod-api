@@ -44,7 +44,8 @@ CREATE TABLE "File" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "folderId" TEXT,
-    "name" TEXT NOT NULL,
+    "originalName" TEXT NOT NULL,
+    "filename" TEXT NOT NULL,
     "mimeType" TEXT NOT NULL,
     "sizeBytes" BIGINT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -83,7 +84,7 @@ CREATE UNIQUE INDEX "User_githubId_key" ON "User"("githubId");
 CREATE UNIQUE INDEX "Folder_userId_parentFolderId_name_key" ON "Folder"("userId", "parentFolderId", "name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "File_userId_folderId_name_key" ON "File"("userId", "folderId", "name");
+CREATE UNIQUE INDEX "File_userId_folderId_filename_key" ON "File"("userId", "folderId", "filename");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "SharedLink_linkToken_key" ON "SharedLink"("linkToken");

@@ -7,27 +7,32 @@ import { registerBearerAuth } from "@/common/utils/openApiComponents";
 import { storageRegistry } from "../storage/storageRouter";
 import { authController } from "./authController";
 import {
-	GetCurrentUserRequestSchema,
 	GetCurrentUserResponseSchema,
 	LoginRequestSchema,
 	LoginResponseSchema,
 	LogoutRequestSchema,
-	LogoutResponseDataSchema,
+	LogoutResponseSchema,
 	RefreshTokenRequestSchema,
 	RefreshTokenResponseSchema,
 	RegisterRequestSchema,
-	RegisterResponseDataSchema,
+	RegisterResponseSchema,
 } from "./authModel";
 
 export const authRegistry = new OpenAPIRegistry();
 export const authRouter: Router = express.Router();
 
-authRegistry.register("Login", LoginRequestSchema);
-authRegistry.register("Register", RegisterRequestSchema);
-authRegistry.register("Refresh Token", RefreshTokenRequestSchema);
+// Register schemas
+authRegistry.register("Login Request", LoginRequestSchema);
+authRegistry.register("Register Request", RegisterRequestSchema);
+authRegistry.register("Refresh Token Request", RefreshTokenRequestSchema);
+authRegistry.register("Login Response", LoginResponseSchema);
+authRegistry.register("Register Response", RegisterResponseSchema);
+authRegistry.register("Get Current User Response", GetCurrentUserResponseSchema);
 
+// Bearer Auth
 const bearerAuth = registerBearerAuth(storageRegistry);
 
+// Login with email and password
 authRegistry.registerPath({
 	method: "post",
 	path: "/api/auth/login",
@@ -37,15 +42,17 @@ authRegistry.registerPath({
 });
 authRouter.post("/login", validateRequest(LoginRequestSchema), authController.login);
 
+// Register a new user
 authRegistry.registerPath({
 	method: "post",
 	path: "/api/auth/register",
 	tags: ["Auth"],
 	request: { body: { content: { "application/json": { schema: RegisterRequestSchema.shape.body } } } },
-	responses: createApiResponse(RegisterResponseDataSchema, "Created", 201),
+	responses: createApiResponse(RegisterResponseSchema, "Created", 201),
 });
 authRouter.post("/register", validateRequest(RegisterRequestSchema), authController.register);
 
+// Refresh access token
 authRegistry.registerPath({
 	method: "post",
 	path: "/api/auth/refresh-token",
@@ -56,22 +63,23 @@ authRegistry.registerPath({
 });
 authRouter.post("/refresh-token", requireAuth, validateRequest(RefreshTokenRequestSchema), authController.refreshToken);
 
+// Logout user
 authRegistry.registerPath({
 	method: "post",
 	path: "/api/auth/logout",
 	tags: ["Auth"],
 	security: [{ [bearerAuth.name]: [] }],
 	request: { body: { content: { "application/json": { schema: LogoutRequestSchema.shape.body } } } },
-	responses: createApiResponse(LogoutResponseDataSchema, "Success", 200),
+	responses: createApiResponse(LogoutResponseSchema, "Success", 200),
 });
 authRouter.post("/logout", requireAuth, validateRequest(LogoutRequestSchema), authController.logout);
 
+// Get current authenticated user
 authRegistry.registerPath({
 	method: "post",
 	path: "/api/auth/user",
 	tags: ["Auth"],
 	security: [{ [bearerAuth.name]: [] }],
-	request: { body: { content: { "application/json": { schema: GetCurrentUserRequestSchema.shape.body } } } },
 	responses: createApiResponse(GetCurrentUserResponseSchema, "Success", 200),
 });
-authRouter.post("/user", requireAuth, validateRequest(GetCurrentUserRequestSchema), authController.getCurrentUser);
+authRouter.post("/user", requireAuth, authController.getCurrentUser);
