@@ -3,7 +3,7 @@ import { z } from "zod";
 
 extendZodWithOpenApi(z);
 
-// General response schemas
+// General file response schemas
 export const FileSummarySchema = z.object({
 	id: z.string(),
 	originalName: z.string(),
@@ -14,6 +14,7 @@ export const FileSummarySchema = z.object({
 });
 export type FileSummary = z.infer<typeof FileSummarySchema>;
 
+// General foldedr response schemas
 export const FolderSummarySchema = z.object({ id: z.string(), name: z.string(), createdAt: z.string() });
 export type FolderSummary = z.infer<typeof FolderSummarySchema>;
 

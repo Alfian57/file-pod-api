@@ -63,6 +63,7 @@ export class StorageRepository {
 		return newFile;
 	}
 
+	// Update user's used storage bytes
 	async updateUserUsedStorageBytes(userId: string, sizeBytes: bigint): Promise<void> {
 		await prisma.user.update({
 			where: { id: userId },

@@ -17,10 +17,13 @@ import {
 export const storageRegistry = new OpenAPIRegistry();
 export const storageRouter: Router = express.Router();
 
+// Register schemas
 storageRegistry.register("Upload File", UploadFileRequestSchema);
 
+// Bearer Auth
 const bearerAuth = registerBearerAuth(storageRegistry);
 
+// Get user's folder and files on root path
 storageRegistry.registerPath({
 	method: "get",
 	path: "/api/my-storage",
@@ -30,6 +33,7 @@ storageRegistry.registerPath({
 });
 storageRouter.get("/", requireAuth, storageController.getStorage);
 
+// Get user's folder and files on specific folder
 storageRegistry.registerPath({
 	method: "get",
 	path: "/api/my-storage/:id",
@@ -45,6 +49,7 @@ storageRouter.get(
 	storageController.getStorageDetail,
 );
 
+// Upload file to user's storage
 storageRegistry.registerPath({
 	method: "post",
 	path: "/api/my-storage/upload",

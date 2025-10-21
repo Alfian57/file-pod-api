@@ -21,12 +21,15 @@ import {
 export const authRegistry = new OpenAPIRegistry();
 export const authRouter: Router = express.Router();
 
-authRegistry.register("Login", LoginRequestSchema);
-authRegistry.register("Register", RegisterRequestSchema);
-authRegistry.register("Refresh Token", RefreshTokenRequestSchema);
+// Register schemas
+authRegistry.register("Login Request", LoginRequestSchema);
+authRegistry.register("Register Request", RegisterRequestSchema);
+authRegistry.register("Refresh Token Request", RefreshTokenRequestSchema);
 
+// Bearer Auth
 const bearerAuth = registerBearerAuth(storageRegistry);
 
+// Login with email and password
 authRegistry.registerPath({
 	method: "post",
 	path: "/api/auth/login",
@@ -36,6 +39,7 @@ authRegistry.registerPath({
 });
 authRouter.post("/login", validateRequest(LoginRequestSchema), authController.login);
 
+// Register a new user
 authRegistry.registerPath({
 	method: "post",
 	path: "/api/auth/register",
@@ -45,6 +49,7 @@ authRegistry.registerPath({
 });
 authRouter.post("/register", validateRequest(RegisterRequestSchema), authController.register);
 
+// Refresh access token
 authRegistry.registerPath({
 	method: "post",
 	path: "/api/auth/refresh-token",
@@ -55,6 +60,7 @@ authRegistry.registerPath({
 });
 authRouter.post("/refresh-token", requireAuth, validateRequest(RefreshTokenRequestSchema), authController.refreshToken);
 
+// Logout user
 authRegistry.registerPath({
 	method: "post",
 	path: "/api/auth/logout",
@@ -64,6 +70,7 @@ authRegistry.registerPath({
 });
 authRouter.post("/logout", requireAuth, authController.logout);
 
+// Get current authenticated user
 authRegistry.registerPath({
 	method: "post",
 	path: "/api/auth/user",

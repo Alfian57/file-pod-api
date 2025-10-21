@@ -14,7 +14,6 @@ export class StorageService {
 		this.storageRepository = repository;
 	}
 
-	// Get list of root folders and files for an authenticated user
 	async getStorage(userId: string): Promise<ServiceResponse<GetStorageResponseData | null>> {
 		try {
 			const result = await this.storageRepository.findStorageByUserId(userId);
@@ -39,7 +38,6 @@ export class StorageService {
 		}
 	}
 
-	// Get folder detail by id
 	async getStorageDetail(id: string): Promise<ServiceResponse<GetStorageDetailResponseData | null>> {
 		try {
 			const result = await this.storageRepository.findStorageByIdWithContent(id);
@@ -66,7 +64,6 @@ export class StorageService {
 		}
 	}
 
-	// Upload file to a folder
 	async uploadFile(
 		userId: string,
 		folderId: string | null,
