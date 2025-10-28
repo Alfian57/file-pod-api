@@ -13,6 +13,8 @@ import {
 	DeleteFileResponseSchema,
 	DeleteFolderRequestSchema,
 	DeleteFolderResponseSchema,
+	DownloadFileRequestSchema,
+	DownloadFileResponseSchema,
 	GetStorageDetailRequestSchema,
 	GetStorageDetailResponseSchema,
 	GetStorageResponseSchema,
@@ -130,3 +132,13 @@ storageRegistry.registerPath({
 	responses: createApiResponse(DeleteFileResponseSchema, "Success"),
 });
 storageRouter.delete("/file/:id", requireAuth, validateRequest(DeleteFileRequestSchema), storageController.deleteFile);
+
+storageRegistry.registerPath({
+	method: "get",
+	path: "/api/my-storage/file/{id}",
+	tags: ["Storage"],
+	security: [{ [bearerAuth.name]: [] }],
+	request: { params: DownloadFileRequestSchema.shape.params },
+	responses: createApiResponse(DownloadFileResponseSchema, "Success"),
+});
+storageRouter.get("/file/:id", requireAuth, validateRequest(DownloadFileRequestSchema), storageController.downloadFile);

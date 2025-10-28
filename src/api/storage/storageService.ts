@@ -7,6 +7,7 @@ import { env } from "@/common/utils/envConfig";
 import { logger } from "@/server";
 import type {
 	CreateFolderResponseData,
+	DownloadFileResponseData,
 	GetStorageDetailResponseData,
 	GetStorageResponseData,
 	UploadFileResponseData,
@@ -165,6 +166,27 @@ export class StorageService {
 			const errorMessage = `Error deleting file: ${(ex as Error).message}`;
 			logger.error(errorMessage);
 			return ServiceResponse.failure("An error occurred deleting file.", null, StatusCodes.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	async downloadFile(id: string): Promise<ServiceResponse<DownloadFileResponseData | null>> {
+		try {
+			const file = await this.storageRepository.findFileById(id);
+			if (!file) {
+				return ServiceResponse.failure("File not found", null, StatusCodes.NOT_FOUND);
+			}
+
+			const objectStream = await minioClient.getObject(env.MINIO_BUCKET_NAME, file.filename);
+
+			return ServiceResponse.success(
+				"File stream ready",
+				{ stream: objectStream, filename: file.originalName, contentType: file.mimeType },
+				StatusCodes.OK,
+			);
+		} catch (ex) {
+			const errorMessage = `Error downloading file: ${(ex as Error).message}`;
+			logger.error(errorMessage);
+			return ServiceResponse.failure("An error occurred downloading file.", null, StatusCodes.INTERNAL_SERVER_ERROR);
 		}
 	}
 }

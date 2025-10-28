@@ -84,3 +84,14 @@ export const DeleteFileRequestSchema = z.object({
 });
 export const DeleteFileResponseSchema = z.null();
 export type DeleteFileResponseData = z.infer<typeof DeleteFileResponseSchema>;
+
+// Download File
+export const DownloadFileRequestSchema = z.object({
+	params: z.object({ id: z.string().uuid() }),
+});
+export const DownloadFileResponseSchema = z.object({
+	stream: z.any().openapi({ type: "string", format: "binary" }),
+	filename: z.string(),
+	contentType: z.string(),
+});
+export type DownloadFileResponseData = z.infer<typeof DownloadFileResponseSchema>;
