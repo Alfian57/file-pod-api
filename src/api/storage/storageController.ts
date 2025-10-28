@@ -27,6 +27,15 @@ class StorageController {
 		return res.status(serviceResponse.statusCode).send(serviceResponse);
 	};
 
+	public deleteFolder: RequestHandler = async (req: Request, res: Response) => {
+		const userId = req.user?.userId;
+		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
+		const { id } = req.params;
+
+		const serviceResponse = await storageService.deleteFolder(id);
+		return res.status(serviceResponse.statusCode).send(serviceResponse);
+	};
+
 	public uploadFile: RequestHandler = async (req: Request, res: Response) => {
 		const userId = req.user?.userId;
 		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
@@ -42,6 +51,40 @@ class StorageController {
 
 		const svcResponse = await storageService.uploadFile(userId, folderId, fileArray);
 		return res.status(svcResponse.statusCode ?? 500).send(svcResponse);
+	};
+
+	public deleteFile: RequestHandler = async (req: Request, res: Response) => {
+		const userId = req.user?.userId;
+		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
+		const { id } = req.params;
+
+		const serviceResponse = await storageService.deleteFile(id);
+		return res.status(serviceResponse.statusCode).send(serviceResponse);
+	};
+
+	public downloadFile: RequestHandler = async (req: Request, res: Response) => {
+		const userId = req.user?.userId;
+		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
+		const { id } = req.params;
+
+		const serviceResponse = await storageService.downloadFile(id);
+		if (serviceResponse.statusCode !== 200 || !serviceResponse.data) {
+			return res.status(serviceResponse.statusCode).send(serviceResponse);
+		}
+
+		const { stream, filename, contentType } = serviceResponse.data;
+
+		res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+		res.setHeader("Content-Type", contentType);
+
+		stream.pipe(res);
+
+		stream.on("error", (err: { message: string }) => {
+			logger.error(`Stream error for file ${id}: ${err.message}`);
+			if (!res.headersSent) {
+				res.status(500).send({ message: "Error streaming file" });
+			}
+		});
 	};
 }
 

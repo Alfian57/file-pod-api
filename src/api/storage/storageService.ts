@@ -7,6 +7,7 @@ import { env } from "@/common/utils/envConfig";
 import { logger } from "@/server";
 import type {
 	CreateFolderResponseData,
+	DownloadFileResponseData,
 	GetStorageDetailResponseData,
 	GetStorageResponseData,
 	UploadFileResponseData,
@@ -75,7 +76,6 @@ export class StorageService {
 		parentFolderId: string | null,
 	): Promise<ServiceResponse<CreateFolderResponseData | null>> {
 		try {
-			// Normalize parentFolderId: convert empty string, "null", or undefined to actual null
 			const normalizedParentId =
 				parentFolderId === "" || parentFolderId === "null" || typeof parentFolderId === "undefined"
 					? null
@@ -97,6 +97,23 @@ export class StorageService {
 		}
 	}
 
+	async deleteFolder(id: string): Promise<ServiceResponse<null>> {
+		try {
+			const folder = await this.storageRepository.findFolderById(id);
+			if (!folder) {
+				return ServiceResponse.failure("Folder not found", null, StatusCodes.NOT_FOUND);
+			}
+
+			await this.storageRepository.deleteFolderById(id);
+			await this.storageRepository.deleteFilesByFolderId(id);
+			return ServiceResponse.success("Folder deleted", null, StatusCodes.OK);
+		} catch (ex) {
+			const errorMessage = `Error deleting folder: ${(ex as Error).message}`;
+			logger.error(errorMessage);
+			return ServiceResponse.failure("An error occurred deleting folder.", null, StatusCodes.INTERNAL_SERVER_ERROR);
+		}
+	}
+
 	async uploadFile(
 		userId: string,
 		folderId: string | null,
@@ -112,7 +129,7 @@ export class StorageService {
 				const { originalname: originalName, mimetype: mimeType, size: sizeBytes } = file;
 				const filename = `${userId}/${Date.now()}-${originalName}`;
 
-				await this.storageRepository.uploadFile(
+				await this.storageRepository.createFile(
 					userId,
 					folder ? folder.id : null,
 					originalName,
@@ -130,6 +147,46 @@ export class StorageService {
 			const errorMessage = `Error uploading file: ${(ex as Error).message}`;
 			logger.error(errorMessage);
 			return ServiceResponse.failure("An error occurred uploading file.", null, StatusCodes.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	async deleteFile(id: string): Promise<ServiceResponse<null>> {
+		try {
+			const file = await this.storageRepository.findFileById(id);
+			if (!file) {
+				return ServiceResponse.failure("File not found", null, StatusCodes.NOT_FOUND);
+			}
+
+			await this.storageRepository.deleteFileById(id);
+			await this.storageRepository.updateUserUsedStorageBytes(file.userId, BigInt(-file.sizeBytes));
+			await minioClient.removeObject(env.MINIO_BUCKET_NAME, file.filename);
+
+			return ServiceResponse.success("File deleted", null, StatusCodes.OK);
+		} catch (ex) {
+			const errorMessage = `Error deleting file: ${(ex as Error).message}`;
+			logger.error(errorMessage);
+			return ServiceResponse.failure("An error occurred deleting file.", null, StatusCodes.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	async downloadFile(id: string): Promise<ServiceResponse<DownloadFileResponseData | null>> {
+		try {
+			const file = await this.storageRepository.findFileById(id);
+			if (!file) {
+				return ServiceResponse.failure("File not found", null, StatusCodes.NOT_FOUND);
+			}
+
+			const objectStream = await minioClient.getObject(env.MINIO_BUCKET_NAME, file.filename);
+
+			return ServiceResponse.success(
+				"File stream ready",
+				{ stream: objectStream, filename: file.originalName, contentType: file.mimeType },
+				StatusCodes.OK,
+			);
+		} catch (ex) {
+			const errorMessage = `Error downloading file: ${(ex as Error).message}`;
+			logger.error(errorMessage);
+			return ServiceResponse.failure("An error occurred downloading file.", null, StatusCodes.INTERNAL_SERVER_ERROR);
 		}
 	}
 }

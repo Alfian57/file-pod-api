@@ -59,6 +59,13 @@ export const CreateFolderRequestSchema = z.object({
 export const CreateFolderResponseSchema = z.null();
 export type CreateFolderResponseData = z.infer<typeof CreateFolderResponseSchema>;
 
+// Delete Folder
+export const DeleteFolderRequestSchema = z.object({
+	params: z.object({ id: z.string().uuid() }),
+});
+export const DeleteFolderResponseSchema = z.null();
+export type DeleteFolderResponseData = z.infer<typeof DeleteFolderResponseSchema>;
+
 // Upload File
 export const UploadFileRequestSchema = z.object({
 	body: z.object({
@@ -70,3 +77,21 @@ export const UploadFileRequestSchema = z.object({
 });
 export const UploadFileResponseSchema = z.null();
 export type UploadFileResponseData = z.infer<typeof UploadFileResponseSchema>;
+
+// Delete File
+export const DeleteFileRequestSchema = z.object({
+	params: z.object({ id: z.string().uuid() }),
+});
+export const DeleteFileResponseSchema = z.null();
+export type DeleteFileResponseData = z.infer<typeof DeleteFileResponseSchema>;
+
+// Download File
+export const DownloadFileRequestSchema = z.object({
+	params: z.object({ id: z.string().uuid() }),
+});
+export const DownloadFileResponseSchema = z.object({
+	stream: z.any().openapi({ type: "string", format: "binary" }),
+	filename: z.string(),
+	contentType: z.string(),
+});
+export type DownloadFileResponseData = z.infer<typeof DownloadFileResponseSchema>;
