@@ -55,6 +55,15 @@ export const LogoutRequestSchema = z.object({
 export const LogoutResponseSchema = z.null();
 export type LogoutResponseData = z.infer<typeof LogoutResponseSchema>;
 
+// Update Profile
+export const UpdateProfileRequestSchema = z.object({
+	body: z.object({
+		name: z.string().optional(),
+	}),
+});
+export const UpdateProfileResponseSchema = z.null();
+export type UpdateProfileResponseData = z.infer<typeof UpdateProfileResponseSchema>;
+
 // Get Current User
 export const GetCurrentUserResponseSchema = z.object({
 	name: z.string().optional(),

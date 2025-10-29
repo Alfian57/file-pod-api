@@ -1,6 +1,7 @@
 import type { Request, RequestHandler, Response } from "express";
 
 import { authService } from "@/api/auth/authService";
+import { logger } from "@/server";
 
 class AuthController {
 	public login: RequestHandler = async (req: Request, res: Response) => {
@@ -25,6 +26,17 @@ class AuthController {
 		const { refreshToken } = req.body;
 		const serviceResponse = await authService.logout(refreshToken);
 		res.status(serviceResponse.statusCode).send(serviceResponse);
+	};
+
+	public updateUser: RequestHandler = async (req: Request, res: Response) => {
+		const userId = req.user?.userId;
+		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
+
+		const { name } = req.body;
+		const profilePicture = req.file;
+
+		const svcResponse = await authService.updateProfile(userId, name, profilePicture);
+		return res.status(svcResponse.statusCode ?? 500).send(svcResponse);
 	};
 
 	public getCurrentUser: RequestHandler = async (req: Request, res: Response) => {

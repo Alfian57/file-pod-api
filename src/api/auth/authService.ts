@@ -2,7 +2,9 @@ import bcrypt from "bcryptjs";
 import { StatusCodes } from "http-status-codes";
 
 import { AuthRepository } from "@/api/auth/authRepository";
+import { minioClient } from "@/common/lib/minio";
 import { ServiceResponse } from "@/common/models/serviceResponse";
+import { env } from "@/common/utils/envConfig";
 import { signJwt } from "@/common/utils/jwt";
 import { generateRefreshToken, getRefreshTokenExpiryDate } from "@/common/utils/refreshToken";
 import { logger } from "@/server";
@@ -12,6 +14,7 @@ import type {
 	LogoutResponseData,
 	RefreshTokenResponseData,
 	RegisterResponseData,
+	UpdateProfileResponseData,
 } from "./authModel";
 
 export class AuthService {
@@ -131,6 +134,35 @@ export class AuthService {
 			const errorMessage = `Error during logout: ${(ex as Error).message}`;
 			logger.error(errorMessage);
 			return ServiceResponse.failure("An error occurred during logout.", null, StatusCodes.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	async updateProfile(
+		userId: string,
+		name?: string,
+		profilePicture?: Express.Multer.File,
+	): Promise<ServiceResponse<UpdateProfileResponseData | null>> {
+		try {
+			let profilePictureFilename: string | undefined;
+
+			if (profilePicture) {
+				const { originalname: originalName } = profilePicture;
+				const filename = `${userId}/${Date.now()}-avatar-${originalName}`;
+
+				await minioClient.putObject(env.MINIO_BUCKET_NAME, filename, profilePicture.buffer);
+				profilePictureFilename = filename;
+			}
+
+			await this.authRepository.updateById(userId, { name, profilePicture: profilePictureFilename });
+			return ServiceResponse.success("update profile successful", null, StatusCodes.OK);
+		} catch (ex) {
+			const errorMessage = `Error during update profile: ${(ex as Error).message}`;
+			logger.error(errorMessage);
+			return ServiceResponse.failure(
+				"An error occurred during update profile.",
+				null,
+				StatusCodes.INTERNAL_SERVER_ERROR,
+			);
 		}
 	}
 
