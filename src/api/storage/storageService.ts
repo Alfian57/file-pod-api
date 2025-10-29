@@ -20,9 +20,13 @@ export class StorageService {
 		this.storageRepository = repository;
 	}
 
-	async getStorage(userId: string): Promise<ServiceResponse<GetStorageResponseData | null>> {
+	async getStorage(
+		userId: string,
+		sortBy: "name" | "createdAt" = "createdAt",
+		sortOrder: "asc" | "desc" = "asc",
+	): Promise<ServiceResponse<GetStorageResponseData | null>> {
 		try {
-			const result = await this.storageRepository.findStorageByUserId(userId);
+			const result = await this.storageRepository.findStorageByUserId(userId, sortBy, sortOrder);
 
 			const mapped = {
 				folders: result.folders.map((f) => ({ id: f.id, name: f.name, createdAt: f.createdAt.toISOString() })),
@@ -44,9 +48,13 @@ export class StorageService {
 		}
 	}
 
-	async getStorageDetail(id: string): Promise<ServiceResponse<GetStorageDetailResponseData | null>> {
+	async getStorageDetail(
+		id: string,
+		sortBy: "name" | "createdAt" = "createdAt",
+		sortOrder: "asc" | "desc" = "asc",
+	): Promise<ServiceResponse<GetStorageDetailResponseData | null>> {
 		try {
-			const result = await this.storageRepository.findStorageByIdWithContent(id);
+			const result = await this.storageRepository.findStorageByIdWithContent(id, sortBy, sortOrder);
 			const mapped = {
 				folders: result.folders.map((f) => ({ id: f.id, name: f.name, createdAt: f.createdAt.toISOString() })),
 				files: result.files.map((fi) => ({

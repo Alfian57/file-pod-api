@@ -18,7 +18,17 @@ export type FileSummary = z.infer<typeof FileSummarySchema>;
 export const FolderSummarySchema = z.object({ id: z.string(), name: z.string(), createdAt: z.string() });
 export type FolderSummary = z.infer<typeof FolderSummarySchema>;
 
+// Sorting schemas
+export const SortBySchema = z.enum(["name", "createdAt"]).default("createdAt");
+export const SortOrderSchema = z.enum(["asc", "desc"]).default("asc");
+
 // Get Storage
+export const GetStorageRequestSchema = z.object({
+	query: z.object({
+		sortBy: SortBySchema.optional(),
+		sortOrder: SortOrderSchema.optional(),
+	}),
+});
 export const GetStorageResponseSchema = z.object({
 	folders: z.array(FolderSummarySchema),
 	files: z.array(FileSummarySchema),
@@ -28,6 +38,10 @@ export type GetStorageResponseData = z.infer<typeof GetStorageResponseSchema>;
 // Get Storage Detail
 export const GetStorageDetailRequestSchema = z.object({
 	params: z.object({ id: z.string().uuid() }),
+	query: z.object({
+		sortBy: SortBySchema.optional(),
+		sortOrder: SortOrderSchema.optional(),
+	}),
 });
 export const GetStorageDetailResponseSchema = z.object({
 	folders: z.array(FolderSummarySchema),

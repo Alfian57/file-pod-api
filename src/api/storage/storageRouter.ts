@@ -17,6 +17,7 @@ import {
 	DownloadFileResponseSchema,
 	GetStorageDetailRequestSchema,
 	GetStorageDetailResponseSchema,
+	GetStorageRequestSchema,
 	GetStorageResponseSchema,
 	UploadFileRequestSchema,
 	UploadFileResponseSchema,
@@ -40,9 +41,12 @@ storageRegistry.registerPath({
 	path: "/api/my-storage",
 	tags: ["Storage"],
 	security: [{ [bearerAuth.name]: [] }],
+	request: {
+		query: GetStorageRequestSchema.shape.query,
+	},
 	responses: createApiResponse(GetStorageResponseSchema, "Success"),
 });
-storageRouter.get("/", requireAuth, storageController.getStorage);
+storageRouter.get("/", requireAuth, validateRequest(GetStorageRequestSchema), storageController.getStorage);
 
 // Get user's folder and files on specific folder
 storageRegistry.registerPath({
@@ -50,7 +54,10 @@ storageRegistry.registerPath({
 	path: "/api/my-storage/{id}",
 	tags: ["Storage"],
 	security: [{ [bearerAuth.name]: [] }],
-	request: { params: GetStorageDetailRequestSchema.shape.params },
+	request: {
+		params: GetStorageDetailRequestSchema.shape.params,
+		query: GetStorageDetailRequestSchema.shape.query,
+	},
 	responses: createApiResponse(GetStorageDetailResponseSchema, "Success"),
 });
 storageRouter.get(

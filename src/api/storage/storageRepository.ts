@@ -4,30 +4,44 @@ const prisma = new PrismaClient();
 
 export class StorageRepository {
 	// Return root folders and files for a given user id
-	async findStorageByUserId(userId: string): Promise<{ folders: Folder[]; files: File[] }> {
+	async findStorageByUserId(
+		userId: string,
+		sortBy: "name" | "createdAt" = "createdAt",
+		sortOrder: "asc" | "desc" = "asc",
+	): Promise<{ folders: Folder[]; files: File[] }> {
+		const folderOrderBy = sortBy === "name" ? { name: sortOrder } : { createdAt: sortOrder };
+		const fileOrderBy = sortBy === "name" ? { originalName: sortOrder } : { createdAt: sortOrder };
+
 		const folders = await prisma.folder.findMany({
 			where: { userId, parentFolderId: null },
-			orderBy: { createdAt: "asc" },
+			orderBy: folderOrderBy,
 		});
 
 		const files = await prisma.file.findMany({
 			where: { userId, folderId: null },
-			orderBy: { createdAt: "asc" },
+			orderBy: fileOrderBy,
 		});
 
 		return { folders, files };
 	}
 
 	// Return folder detail by id (including subfolders and files)
-	async findStorageByIdWithContent(id: string): Promise<{ folders: Folder[]; files: File[] }> {
+	async findStorageByIdWithContent(
+		id: string,
+		sortBy: "name" | "createdAt" = "createdAt",
+		sortOrder: "asc" | "desc" = "asc",
+	): Promise<{ folders: Folder[]; files: File[] }> {
+		const folderOrderBy = sortBy === "name" ? { name: sortOrder } : { createdAt: sortOrder };
+		const fileOrderBy = sortBy === "name" ? { originalName: sortOrder } : { createdAt: sortOrder };
+
 		const folders = await prisma.folder.findMany({
 			where: { parentFolderId: id },
-			orderBy: { createdAt: "asc" },
+			orderBy: folderOrderBy,
 		});
 
 		const files = await prisma.file.findMany({
 			where: { folderId: id },
-			orderBy: { createdAt: "asc" },
+			orderBy: fileOrderBy,
 		});
 
 		return { folders, files };
