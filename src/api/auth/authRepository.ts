@@ -12,7 +12,7 @@ export class AuthRepository {
 		return prisma.user.findUnique({ where: { id } });
 	}
 
-	async updateById(id: string, data: { name?: string; profilePicture?: string }): Promise<void> {
+	async updateById(id: string, data: { name?: string; profilePicture?: string; password?: string }): Promise<void> {
 		await prisma.user.update({
 			where: { id },
 			data,

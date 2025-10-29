@@ -14,6 +14,7 @@ import type {
 	LogoutResponseData,
 	RefreshTokenResponseData,
 	RegisterResponseData,
+	UpdatePasswordResponseData,
 	UpdateProfileResponseData,
 } from "./authModel";
 
@@ -137,6 +138,7 @@ export class AuthService {
 		}
 	}
 
+	// Update Profile
 	async updateProfile(
 		userId: string,
 		name?: string,
@@ -160,6 +162,38 @@ export class AuthService {
 			logger.error(errorMessage);
 			return ServiceResponse.failure(
 				"An error occurred during update profile.",
+				null,
+				StatusCodes.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+
+	// Update Password
+	async updatePassword(
+		userId: string,
+		oldPassword: string,
+		newPassword: string,
+	): Promise<ServiceResponse<UpdatePasswordResponseData | null>> {
+		try {
+			const user = await this.authRepository.findById(userId);
+			if (!user || !user.password) {
+				return ServiceResponse.failure("User not found", null, StatusCodes.NOT_FOUND);
+			}
+
+			const passwordMatches = await bcrypt.compare(oldPassword, user.password);
+			if (!passwordMatches) {
+				return ServiceResponse.failure("Old password is incorrect", null, StatusCodes.UNAUTHORIZED);
+			}
+
+			const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+			await this.authRepository.updateById(userId, { password: hashedNewPassword });
+
+			return ServiceResponse.success("Password updated successfully", null, StatusCodes.OK);
+		} catch (ex) {
+			const errorMessage = `Error during update password: ${(ex as Error).message}`;
+			logger.error(errorMessage);
+			return ServiceResponse.failure(
+				"An error occurred during update password.",
 				null,
 				StatusCodes.INTERNAL_SERVER_ERROR,
 			);

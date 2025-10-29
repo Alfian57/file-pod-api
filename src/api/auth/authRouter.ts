@@ -17,7 +17,8 @@ import {
 	RefreshTokenResponseSchema,
 	RegisterRequestSchema,
 	RegisterResponseSchema,
-	UpdateProfileRequestSchema,
+	UpdatePasswordRequestSchema,
+	UpdatePasswordResponseSchema,
 	UpdateProfileResponseSchema,
 } from "./authModel";
 
@@ -101,6 +102,17 @@ authRegistry.registerPath({
 	responses: createApiResponse(UpdateProfileResponseSchema, "Success", 200),
 });
 authRouter.put("/profile", requireAuth, multerUpload.single("profilePicture"), authController.updateUser);
+
+// Update Password
+authRegistry.registerPath({
+	method: "put",
+	path: "/api/auth/password",
+	tags: ["Auth"],
+	security: [{ [bearerAuth.name]: [] }],
+	request: { body: { content: { "application/json": { schema: UpdatePasswordRequestSchema.shape.body } } } },
+	responses: createApiResponse(UpdatePasswordResponseSchema, "Success", 200),
+});
+authRouter.put("/password", requireAuth, validateRequest(UpdatePasswordRequestSchema), authController.updatePassword);
 
 // Get current authenticated user
 authRegistry.registerPath({
