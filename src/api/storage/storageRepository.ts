@@ -153,4 +153,24 @@ export class StorageRepository {
 			},
 		});
 	}
+
+	// Get user storage info
+	async findUserById(userId: string) {
+		return prisma.user.findUnique({
+			where: { id: userId },
+		});
+	}
+
+	// Get storage statistics by file categories
+	async getStorageStatisticsByCategory(userId: string) {
+		const files = await prisma.file.findMany({
+			where: { userId },
+			select: {
+				mimeType: true,
+				sizeBytes: true,
+			},
+		});
+
+		return files;
+	}
 }

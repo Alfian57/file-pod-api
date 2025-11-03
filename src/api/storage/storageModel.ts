@@ -135,3 +135,18 @@ export const ShareFolderResponseSchema = z.object({
 	shareUrl: z.string(),
 });
 export type ShareFolderResponseData = z.infer<typeof ShareFolderResponseSchema>;
+
+// Storage Statistics
+export const GetStorageStatisticsRequestSchema = z.object({});
+export const StorageCategorySchema = z.object({
+	category: z.string(),
+	sizeBytes: z.string(),
+	count: z.number(),
+});
+export const GetStorageStatisticsResponseSchema = z.object({
+	totalBytes: z.string(),
+	usedBytes: z.string(),
+	availableBytes: z.string(),
+	categories: z.array(StorageCategorySchema),
+});
+export type GetStorageStatisticsResponseData = z.infer<typeof GetStorageStatisticsResponseSchema>;

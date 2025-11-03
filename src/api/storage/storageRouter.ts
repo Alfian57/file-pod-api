@@ -19,6 +19,8 @@ import {
 	GetStorageDetailResponseSchema,
 	GetStorageRequestSchema,
 	GetStorageResponseSchema,
+	GetStorageStatisticsRequestSchema,
+	GetStorageStatisticsResponseSchema,
 	ShareFileRequestSchema,
 	ShareFileResponseSchema,
 	ShareFolderRequestSchema,
@@ -51,6 +53,21 @@ storageRegistry.registerPath({
 	responses: createApiResponse(GetStorageResponseSchema, "Success"),
 });
 storageRouter.get("/", requireAuth, validateRequest(GetStorageRequestSchema), storageController.getStorage);
+
+// Get storage statistics (must be before /:id route)
+storageRegistry.registerPath({
+	method: "get",
+	path: "/api/my-storage/statistics",
+	tags: ["Storage"],
+	security: [{ [bearerAuth.name]: [] }],
+	responses: createApiResponse(GetStorageStatisticsResponseSchema, "Success"),
+});
+storageRouter.get(
+	"/statistics",
+	requireAuth,
+	validateRequest(GetStorageStatisticsRequestSchema),
+	storageController.getStorageStatistics,
+);
 
 // Get user's folder and files on specific folder
 storageRegistry.registerPath({

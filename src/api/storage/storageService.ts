@@ -11,6 +11,7 @@ import type {
 	DownloadFileResponseData,
 	GetStorageDetailResponseData,
 	GetStorageResponseData,
+	GetStorageStatisticsResponseData,
 	ShareFileResponseData,
 	ShareFolderResponseData,
 	UploadFileResponseData,
@@ -254,6 +255,96 @@ export class StorageService {
 			const errorMessage = `Error sharing folder: ${(ex as Error).message}`;
 			logger.error(errorMessage);
 			return ServiceResponse.failure("An error occurred sharing folder.", null, StatusCodes.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	async getStorageStatistics(userId: string): Promise<ServiceResponse<GetStorageStatisticsResponseData | null>> {
+		try {
+			const user = await this.storageRepository.findUserById(userId);
+			if (!user) {
+				return ServiceResponse.failure("User not found", null, StatusCodes.NOT_FOUND);
+			}
+
+			const files = await this.storageRepository.getStorageStatisticsByCategory(userId);
+
+			// Group files by category
+			const categoryStats: Record<string, { sizeBytes: bigint; count: number }> = {
+				"Design Files": { sizeBytes: BigInt(0), count: 0 },
+				Images: { sizeBytes: BigInt(0), count: 0 },
+				Video: { sizeBytes: BigInt(0), count: 0 },
+				Documents: { sizeBytes: BigInt(0), count: 0 },
+				Others: { sizeBytes: BigInt(0), count: 0 },
+			};
+
+			for (const file of files) {
+				let categorized = false;
+
+				// Check Design Files (excluding images that are in design category)
+				if (
+					file.mimeType.match(
+						/(application\/pdf|application\/postscript|vnd\.adobe\.photoshop|illustrator|x-photoshop|vnd\.sketch|vnd\.figma|x-figma)/i,
+					)
+				) {
+					categoryStats["Design Files"].sizeBytes += file.sizeBytes;
+					categoryStats["Design Files"].count += 1;
+					categorized = true;
+				}
+				// Check Images (but not design files)
+				else if (file.mimeType.startsWith("image/")) {
+					categoryStats.Images.sizeBytes += file.sizeBytes;
+					categoryStats.Images.count += 1;
+					categorized = true;
+				}
+				// Check Video
+				else if (file.mimeType.startsWith("video/")) {
+					categoryStats.Video.sizeBytes += file.sizeBytes;
+					categoryStats.Video.count += 1;
+					categorized = true;
+				}
+				// Check Documents
+				else if (
+					file.mimeType.match(
+						/(msword|wordprocessingml|ms-excel|spreadsheetml|ms-powerpoint|presentationml|text\/plain|text\/csv|application\/rtf)/i,
+					)
+				) {
+					categoryStats.Documents.sizeBytes += file.sizeBytes;
+					categoryStats.Documents.count += 1;
+					categorized = true;
+				}
+
+				// If not categorized, put in Others
+				if (!categorized) {
+					categoryStats.Others.sizeBytes += file.sizeBytes;
+					categoryStats.Others.count += 1;
+				}
+			}
+
+			const categories = Object.entries(categoryStats).map(([category, stats]) => ({
+				category,
+				sizeBytes: stats.sizeBytes.toString(),
+				count: stats.count,
+			}));
+
+			const totalBytes = user.storageQuotaBytes.toString();
+			const usedBytes = user.storageUsedBytes.toString();
+			const availableBytes = (user.storageQuotaBytes - user.storageUsedBytes).toString();
+
+			const response: GetStorageStatisticsResponseData = {
+				totalBytes,
+				usedBytes,
+				availableBytes,
+				categories,
+			};
+
+			return ServiceResponse.success("Storage statistics fetched", response, StatusCodes.OK);
+		} catch (ex) {
+			const errorMessage = `Error fetching storage statistics: ${(ex as Error).message}`;
+			logger.error(errorMessage);
+			return ServiceResponse.failure(
+				"An error occurred fetching storage statistics.",
+				null,
+				StatusCodes.INTERNAL_SERVER_ERROR,
+			);
 		}
 	}
 }
