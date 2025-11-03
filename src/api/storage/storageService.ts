@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { StatusCodes } from "http-status-codes";
 
 import { StorageRepository } from "@/api/storage/storageRepository";
@@ -10,6 +11,8 @@ import type {
 	DownloadFileResponseData,
 	GetStorageDetailResponseData,
 	GetStorageResponseData,
+	ShareFileResponseData,
+	ShareFolderResponseData,
 	UploadFileResponseData,
 } from "./storageModel";
 
@@ -195,6 +198,62 @@ export class StorageService {
 			const errorMessage = `Error downloading file: ${(ex as Error).message}`;
 			logger.error(errorMessage);
 			return ServiceResponse.failure("An error occurred downloading file.", null, StatusCodes.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	async shareFile(
+		userId: string,
+		fileId: string,
+		password?: string,
+	): Promise<ServiceResponse<ShareFileResponseData | null>> {
+		try {
+			const file = await this.storageRepository.findFileById(fileId);
+			if (!file) {
+				return ServiceResponse.failure("File not found", null, StatusCodes.NOT_FOUND);
+			}
+
+			if (file.userId !== userId) {
+				return ServiceResponse.failure("Unauthorized", null, StatusCodes.FORBIDDEN);
+			}
+
+			const linkToken = randomBytes(32).toString("hex");
+			await this.storageRepository.createFileShareLink(userId, fileId, linkToken, password);
+
+			const shareUrl = `${env.APP_URL}/shared/${linkToken}`;
+
+			return ServiceResponse.success("File shared successfully", { linkToken, shareUrl }, StatusCodes.CREATED);
+		} catch (ex) {
+			const errorMessage = `Error sharing file: ${(ex as Error).message}`;
+			logger.error(errorMessage);
+			return ServiceResponse.failure("An error occurred sharing file.", null, StatusCodes.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	async shareFolder(
+		userId: string,
+		folderId: string,
+		password?: string,
+	): Promise<ServiceResponse<ShareFolderResponseData | null>> {
+		try {
+			const folder = await this.storageRepository.findFolderById(folderId);
+			if (!folder) {
+				return ServiceResponse.failure("Folder not found", null, StatusCodes.NOT_FOUND);
+			}
+
+			if (folder.userId !== userId) {
+				return ServiceResponse.failure("Unauthorized", null, StatusCodes.FORBIDDEN);
+			}
+
+			const linkToken = randomBytes(32).toString("hex");
+			await this.storageRepository.createFolderShareLink(userId, folderId, linkToken, password);
+
+			const shareUrl = `${env.APP_URL}/shared/${linkToken}`;
+
+			return ServiceResponse.success("Folder shared successfully", { linkToken, shareUrl }, StatusCodes.CREATED);
+		} catch (ex) {
+			const errorMessage = `Error sharing folder: ${(ex as Error).message}`;
+			logger.error(errorMessage);
+			return ServiceResponse.failure("An error occurred sharing folder.", null, StatusCodes.INTERNAL_SERVER_ERROR);
 		}
 	}
 }

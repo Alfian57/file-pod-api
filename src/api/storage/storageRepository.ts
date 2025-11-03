@@ -129,4 +129,28 @@ export class StorageRepository {
 			},
 		});
 	}
+
+	// Create shared link for file
+	async createFileShareLink(userId: string, fileId: string, linkToken: string, password?: string) {
+		return prisma.sharedLink.create({
+			data: {
+				userId,
+				fileId,
+				linkToken,
+				password,
+			},
+		});
+	}
+
+	// Create shared link for folder
+	async createFolderShareLink(userId: string, folderId: string, linkToken: string, password?: string) {
+		return prisma.sharedLink.create({
+			data: {
+				userId,
+				folderId,
+				linkToken,
+				password,
+			},
+		});
+	}
 }

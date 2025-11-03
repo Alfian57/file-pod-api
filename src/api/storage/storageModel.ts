@@ -109,3 +109,29 @@ export const DownloadFileResponseSchema = z.object({
 	contentType: z.string(),
 });
 export type DownloadFileResponseData = z.infer<typeof DownloadFileResponseSchema>;
+
+// Share File
+export const ShareFileRequestSchema = z.object({
+	params: z.object({ id: z.string().uuid() }),
+	body: z.object({
+		password: z.string().optional(),
+	}),
+});
+export const ShareFileResponseSchema = z.object({
+	linkToken: z.string(),
+	shareUrl: z.string(),
+});
+export type ShareFileResponseData = z.infer<typeof ShareFileResponseSchema>;
+
+// Share Folder
+export const ShareFolderRequestSchema = z.object({
+	params: z.object({ id: z.string().uuid() }),
+	body: z.object({
+		password: z.string().optional(),
+	}),
+});
+export const ShareFolderResponseSchema = z.object({
+	linkToken: z.string(),
+	shareUrl: z.string(),
+});
+export type ShareFolderResponseData = z.infer<typeof ShareFolderResponseSchema>;

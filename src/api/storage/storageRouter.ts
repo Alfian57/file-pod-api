@@ -1,5 +1,6 @@
 import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 import express, { type Router } from "express";
+import { StatusCodes } from "http-status-codes";
 import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
 import { multerUpload } from "@/common/lib/multer";
 import requireAuth from "@/common/middleware/authMiddleware";
@@ -14,11 +15,14 @@ import {
 	DeleteFolderRequestSchema,
 	DeleteFolderResponseSchema,
 	DownloadFileRequestSchema,
-	DownloadFileResponseSchema,
 	GetStorageDetailRequestSchema,
 	GetStorageDetailResponseSchema,
 	GetStorageRequestSchema,
 	GetStorageResponseSchema,
+	ShareFileRequestSchema,
+	ShareFileResponseSchema,
+	ShareFolderRequestSchema,
+	ShareFolderResponseSchema,
 	UploadFileRequestSchema,
 	UploadFileResponseSchema,
 } from "./storageModel";
@@ -140,12 +144,92 @@ storageRegistry.registerPath({
 });
 storageRouter.delete("/file/:id", requireAuth, validateRequest(DeleteFileRequestSchema), storageController.deleteFile);
 
+// Download file from user's storage
 storageRegistry.registerPath({
 	method: "get",
 	path: "/api/my-storage/file/{id}",
 	tags: ["Storage"],
 	security: [{ [bearerAuth.name]: [] }],
 	request: { params: DownloadFileRequestSchema.shape.params },
-	responses: createApiResponse(DownloadFileResponseSchema, "Success"),
+	responses: {
+		[StatusCodes.OK]: {
+			description: "Success - Returns binary file for download",
+			content: {
+				"application/octet-stream": {
+					schema: {
+						type: "string",
+						format: "binary",
+						description: "File content as binary stream",
+					},
+				},
+			},
+		},
+		[StatusCodes.NOT_FOUND]: {
+			description: "File not found",
+			content: {
+				"application/json": {
+					schema: {
+						type: "object",
+						properties: {
+							message: { type: "string" },
+							data: { type: "null" },
+						},
+					},
+				},
+			},
+		},
+		[StatusCodes.UNAUTHORIZED]: {
+			description: "Unauthorized",
+			content: {
+				"application/json": {
+					schema: {
+						type: "object",
+						properties: {
+							message: { type: "string" },
+							data: { type: "null" },
+						},
+					},
+				},
+			},
+		},
+	},
 });
 storageRouter.get("/file/:id", requireAuth, validateRequest(DownloadFileRequestSchema), storageController.downloadFile);
+
+// Share file from user's storage
+storageRegistry.registerPath({
+	method: "post",
+	path: "/api/my-storage/file/{id}/share",
+	tags: ["Storage"],
+	security: [{ [bearerAuth.name]: [] }],
+	request: {
+		params: ShareFileRequestSchema.shape.params,
+		body: { content: { "application/json": { schema: ShareFileRequestSchema.shape.body } } },
+	},
+	responses: createApiResponse(ShareFileResponseSchema, "Success"),
+});
+storageRouter.post(
+	"/file/:id/share",
+	requireAuth,
+	validateRequest(ShareFileRequestSchema),
+	storageController.shareFile,
+);
+
+// Share folder from user's storage
+storageRegistry.registerPath({
+	method: "post",
+	path: "/api/my-storage/folder/{id}/share",
+	tags: ["Storage"],
+	security: [{ [bearerAuth.name]: [] }],
+	request: {
+		params: ShareFolderRequestSchema.shape.params,
+		body: { content: { "application/json": { schema: ShareFolderRequestSchema.shape.body } } },
+	},
+	responses: createApiResponse(ShareFolderResponseSchema, "Success"),
+});
+storageRouter.post(
+	"/folder/:id/share",
+	requireAuth,
+	validateRequest(ShareFolderRequestSchema),
+	storageController.shareFolder,
+);

@@ -96,6 +96,26 @@ class StorageController {
 			}
 		});
 	};
+
+	public shareFile: RequestHandler = async (req: Request, res: Response) => {
+		const userId = req.user?.userId;
+		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
+		const { id } = req.params;
+		const { password } = req.body;
+
+		const serviceResponse = await storageService.shareFile(userId, id, password);
+		return res.status(serviceResponse.statusCode).send(serviceResponse);
+	};
+
+	public shareFolder: RequestHandler = async (req: Request, res: Response) => {
+		const userId = req.user?.userId;
+		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
+		const { id } = req.params;
+		const { password } = req.body;
+
+		const serviceResponse = await storageService.shareFolder(userId, id, password);
+		return res.status(serviceResponse.statusCode).send(serviceResponse);
+	};
 }
 
 export const storageController = new StorageController();
