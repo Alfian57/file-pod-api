@@ -1,6 +1,7 @@
 import { OpenAPIRegistry } from "@asteasolutions/zod-to-openapi";
 import express, { type Router } from "express";
 import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
+import { multerUpload } from "@/common/lib/multer";
 import requireAuth from "@/common/middleware/authMiddleware";
 import { validateRequest } from "@/common/utils/httpHandlers";
 import { registerBearerAuth } from "@/common/utils/openApiComponents";
@@ -16,6 +17,9 @@ import {
 	RefreshTokenResponseSchema,
 	RegisterRequestSchema,
 	RegisterResponseSchema,
+	UpdatePasswordRequestSchema,
+	UpdatePasswordResponseSchema,
+	UpdateProfileResponseSchema,
 } from "./authModel";
 
 export const authRegistry = new OpenAPIRegistry();
@@ -74,12 +78,48 @@ authRegistry.registerPath({
 });
 authRouter.post("/logout", requireAuth, validateRequest(LogoutRequestSchema), authController.logout);
 
+// Update Profile
+authRegistry.registerPath({
+	method: "put",
+	path: "/api/auth/profile",
+	tags: ["Auth"],
+	security: [{ [bearerAuth.name]: [] }],
+	request: {
+		body: {
+			content: {
+				"multipart/form-data": {
+					schema: {
+						type: "object",
+						properties: {
+							name: { type: "string", description: "User's name" },
+							profilePicture: { type: "string", format: "binary", description: "Profile picture file" },
+						},
+					},
+				},
+			},
+		},
+	},
+	responses: createApiResponse(UpdateProfileResponseSchema, "Success", 200),
+});
+authRouter.put("/profile", requireAuth, multerUpload.single("profilePicture"), authController.updateUser);
+
+// Update Password
+authRegistry.registerPath({
+	method: "put",
+	path: "/api/auth/password",
+	tags: ["Auth"],
+	security: [{ [bearerAuth.name]: [] }],
+	request: { body: { content: { "application/json": { schema: UpdatePasswordRequestSchema.shape.body } } } },
+	responses: createApiResponse(UpdatePasswordResponseSchema, "Success", 200),
+});
+authRouter.put("/password", requireAuth, validateRequest(UpdatePasswordRequestSchema), authController.updatePassword);
+
 // Get current authenticated user
 authRegistry.registerPath({
-	method: "post",
+	method: "get",
 	path: "/api/auth/user",
 	tags: ["Auth"],
 	security: [{ [bearerAuth.name]: [] }],
 	responses: createApiResponse(GetCurrentUserResponseSchema, "Success", 200),
 });
-authRouter.post("/user", requireAuth, authController.getCurrentUser);
+authRouter.get("/user", requireAuth, authController.getCurrentUser);

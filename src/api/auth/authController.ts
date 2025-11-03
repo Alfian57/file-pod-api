@@ -27,6 +27,27 @@ class AuthController {
 		res.status(serviceResponse.statusCode).send(serviceResponse);
 	};
 
+	public updateUser: RequestHandler = async (req: Request, res: Response) => {
+		const userId = req.user?.userId;
+		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
+
+		const { name } = req.body;
+		const profilePicture = req.file;
+
+		const svcResponse = await authService.updateProfile(userId, name, profilePicture);
+		return res.status(svcResponse.statusCode ?? 500).send(svcResponse);
+	};
+
+	public updatePassword: RequestHandler = async (req: Request, res: Response) => {
+		const userId = req.user?.userId;
+		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
+
+		const { oldPassword, newPassword } = req.body;
+
+		const svcResponse = await authService.updatePassword(userId, oldPassword, newPassword);
+		return res.status(svcResponse.statusCode ?? 500).send(svcResponse);
+	};
+
 	public getCurrentUser: RequestHandler = async (req: Request, res: Response) => {
 		const userId = req.user?.userId;
 		if (!userId) {

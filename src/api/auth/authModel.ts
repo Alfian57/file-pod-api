@@ -55,6 +55,20 @@ export const LogoutRequestSchema = z.object({
 export const LogoutResponseSchema = z.null();
 export type LogoutResponseData = z.infer<typeof LogoutResponseSchema>;
 
+// Update Profile
+export const UpdateProfileResponseSchema = z.null();
+export type UpdateProfileResponseData = z.infer<typeof UpdateProfileResponseSchema>;
+
+// Update Password
+export const UpdatePasswordRequestSchema = z.object({
+	body: z.object({
+		oldPassword: z.string().min(1, "Old password is required"),
+		newPassword: z.string().min(6, "New password must be at least 6 characters"),
+	}),
+});
+export const UpdatePasswordResponseSchema = z.null();
+export type UpdatePasswordResponseData = z.infer<typeof UpdatePasswordResponseSchema>;
+
 // Get Current User
 export const GetCurrentUserResponseSchema = z.object({
 	name: z.string().optional(),

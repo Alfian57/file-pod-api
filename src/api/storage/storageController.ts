@@ -6,7 +6,12 @@ class StorageController {
 	public getStorage: RequestHandler = async (req: Request, res: Response) => {
 		const userId = req.user?.userId;
 		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
-		const serviceResponse = await storageService.getStorage(userId);
+		const { sortBy, sortOrder } = req.query;
+		const serviceResponse = await storageService.getStorage(
+			userId,
+			sortBy as "name" | "createdAt" | undefined,
+			sortOrder as "asc" | "desc" | undefined,
+		);
 		res.status(serviceResponse.statusCode).send(serviceResponse);
 	};
 
@@ -14,7 +19,12 @@ class StorageController {
 		const userId = req.user?.userId;
 		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
 		const { id } = req.params;
-		const serviceResponse = await storageService.getStorageDetail(id);
+		const { sortBy, sortOrder } = req.query;
+		const serviceResponse = await storageService.getStorageDetail(
+			id,
+			sortBy as "name" | "createdAt" | undefined,
+			sortOrder as "asc" | "desc" | undefined,
+		);
 		res.status(serviceResponse.statusCode).send(serviceResponse);
 	};
 
@@ -85,6 +95,26 @@ class StorageController {
 				res.status(500).send({ message: "Error streaming file" });
 			}
 		});
+	};
+
+	public shareFile: RequestHandler = async (req: Request, res: Response) => {
+		const userId = req.user?.userId;
+		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
+		const { id } = req.params;
+		const { password } = req.body;
+
+		const serviceResponse = await storageService.shareFile(userId, id, password);
+		return res.status(serviceResponse.statusCode).send(serviceResponse);
+	};
+
+	public shareFolder: RequestHandler = async (req: Request, res: Response) => {
+		const userId = req.user?.userId;
+		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
+		const { id } = req.params;
+		const { password } = req.body;
+
+		const serviceResponse = await storageService.shareFolder(userId, id, password);
+		return res.status(serviceResponse.statusCode).send(serviceResponse);
 	};
 }
 
