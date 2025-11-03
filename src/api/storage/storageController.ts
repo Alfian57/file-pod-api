@@ -116,6 +116,14 @@ class StorageController {
 		const serviceResponse = await storageService.shareFolder(userId, id, password);
 		return res.status(serviceResponse.statusCode).send(serviceResponse);
 	};
+
+	public getStorageStatistics: RequestHandler = async (req: Request, res: Response) => {
+		const userId = req.user?.userId;
+		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
+
+		const serviceResponse = await storageService.getStorageStatistics(userId);
+		return res.status(serviceResponse.statusCode).send(serviceResponse);
+	};
 }
 
 export const storageController = new StorageController();
