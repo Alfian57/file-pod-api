@@ -6,13 +6,13 @@ WORKDIR /app
 FROM base AS prod-deps
 COPY package.json bun.lock ./
 # Install only production dependencies
-RUN bun install --production --frozen-lockfile
+RUN bun install --production --frozen-lockfile --ignore-scripts
 
 # Build stage - install all dependencies and build
 FROM base AS build
 COPY package.json bun.lock ./
 # Install all dependencies (including dev dependencies)
-RUN bun install --frozen-lockfile
+RUN bun install --frozen-lockfile --ignore-scripts
 COPY . .
 RUN bun run build
 
