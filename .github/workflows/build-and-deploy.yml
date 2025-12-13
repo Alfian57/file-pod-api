@@ -1,17 +1,17 @@
-name: Build, Push, and Deploy
+name: Build and Deploy
 
 on:
-    workflow_dispatch
-    # push:
-    #     branches: ["main"]
-    # pull_request:
-    #     branches: ["main"]
+    push:
+        branches: ["main"]
+    pull_request:
+        branches: ["main"]
 
 env:
-    IMAGE_NAME: ghcr.io/${{ github.repository }}
+    REGISTRY: ghcr.io
+    IMAGE_NAME: ${{ github.repository_owner }}/file-pod-api
 
 jobs:
-    build-push-and-deploy:
+    build:
         runs-on: ubuntu-latest
         permissions:
             contents: read
@@ -21,52 +21,53 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v4
 
-            - name: Log in to GitHub Container Registry
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Log in to Container Registry
+              if: github.event_name != 'pull_request'
               uses: docker/login-action@v3
               with:
-                  registry: ghcr.io
+                  registry: ${{ env.REGISTRY }}
                   username: ${{ github.actor }}
                   password: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Extract Docker metadata
+            - name: Extract metadata for Docker
               id: meta
               uses: docker/metadata-action@v5
               with:
-                  images: ${{ env.IMAGE_NAME }}
+                  images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
                   tags: |
-                      type=sha
-                      type=raw,value=latest,enable={{is_default_branch}}
+                      type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+                      type=sha,prefix=
 
             - name: Build and push Docker image
-              uses: docker/build-push-action@v5
+              uses: docker/build-push-action@v6
               with:
                   context: .
-                  file: ./Dockerfile
-                  push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+                  push: ${{ github.event_name != 'pull_request' }}
                   tags: ${{ steps.meta.outputs.tags }}
                   labels: ${{ steps.meta.outputs.labels }}
                   cache-from: type=gha
                   cache-to: type=gha,mode=max
 
-            - name: Deploy to Server via SSH
-              if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-              uses: appleboy/ssh-action@v1.0.3
-              with:
-                  host: ${{ secrets.VPS_HOST }}
-                  username: ${{ secrets.VPS_USER }}
-                  key: ${{ secrets.VPS_KEY }}
-                  script: |
-                      echo "🚀 Starting deployment..."  
-                      cd /root/deployment/other/file-pod-api
+    deploy:
+        needs: build
+        runs-on: ubuntu-latest
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
-                      echo " pulling latest image..."
-                      docker pull ${{ env.IMAGE_NAME }}:latest
+        steps:
+            - name: Setup SSH Key
+              run: |
+                  mkdir -p ~/.ssh
+                  echo "${{ secrets.VPS_KEY }}" > ~/.ssh/id_rsa
+                  chmod 600 ~/.ssh/id_rsa
+                  ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
-                      echo " restarting container using docker-compose..."
-                      docker-compose down
-                      docker-compose up -d
-
-                      echo " cleaning up old images..."
-                      docker image prune -af
-
-                      echo "✅ Deployment finished successfully."
+            - name: Deploy via SSH
+              run: |
+                  ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+                    cd /opt/docker-stack/applications/file-pod-api
+                    chmod +x ./update.sh
+                    ./update.sh
+                  EOF
