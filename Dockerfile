@@ -1,26 +1,23 @@
-# Base stage with pnpm setup
-FROM node:23.11.1-slim AS base
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable
+# Base stage with bun setup
+FROM oven/bun:1-alpine AS base
 WORKDIR /app
 
 # Production dependencies stage
 FROM base AS prod-deps
-COPY package.json pnpm-lock.yaml ./
+COPY package.json bun.lock ./
 # Install only production dependencies
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-lockfile --ignore-scripts
+RUN bun install --production --frozen-lockfile
 
 # Build stage - install all dependencies and build
 FROM base AS build
-COPY package.json pnpm-lock.yaml ./
+COPY package.json bun.lock ./
 # Install all dependencies (including dev dependencies)
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --ignore-scripts
+RUN bun install --frozen-lockfile
 COPY . .
-RUN pnpm run build
+RUN bun run build
 
 # Final stage - combine production dependencies and build output
-FROM node:23.11.1-alpine AS runner
+FROM node:23-alpine AS runner
 WORKDIR /app
 COPY --from=prod-deps --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/dist ./dist
