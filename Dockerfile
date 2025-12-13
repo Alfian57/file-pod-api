@@ -14,7 +14,8 @@ COPY package.json bun.lock ./
 # Install all dependencies (including dev dependencies)
 RUN bun install --frozen-lockfile --ignore-scripts
 COPY . .
-RUN bun run build
+# Generate Prisma client and build
+RUN bunx prisma generate && bun run build
 
 # Final stage - combine production dependencies and build output
 FROM node:23-alpine AS runner
