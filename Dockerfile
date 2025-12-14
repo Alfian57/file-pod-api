@@ -22,6 +22,9 @@ FROM node:23-alpine AS runner
 WORKDIR /app
 COPY --from=prod-deps --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/dist ./dist
+# Copy Prisma generated client with Query Engine
+COPY --from=build --chown=node:node /app/src/generated ./src/generated
+COPY --from=build --chown=node:node /app/node_modules/.prisma ./node_modules/.prisma
 
 # Use the node user from the image
 USER node
