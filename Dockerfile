@@ -29,5 +29,5 @@ USER node
 # Expose port 8080
 EXPOSE 8080
 
-# Start the server
-CMD ["node", "dist/index.js"]
+# Start the server using CommonJS format (required for Prisma compatibility)
+CMD ["node", "dist/index.cjs"]
