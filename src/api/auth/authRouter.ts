@@ -9,6 +9,8 @@ import { storageRegistry } from "../storage/storageRouter";
 import { authController } from "./authController";
 import {
 	GetCurrentUserResponseSchema,
+	GitHubLoginRequestSchema,
+	GoogleLoginRequestSchema,
 	LoginRequestSchema,
 	LoginResponseSchema,
 	LogoutRequestSchema,
@@ -65,7 +67,7 @@ authRegistry.registerPath({
 	request: { body: { content: { "application/json": { schema: RefreshTokenRequestSchema.shape.body } } } },
 	responses: createApiResponse(RefreshTokenResponseSchema, "Success", 200),
 });
-authRouter.post("/refresh-token", requireAuth, validateRequest(RefreshTokenRequestSchema), authController.refreshToken);
+authRouter.post("/refresh-token", validateRequest(RefreshTokenRequestSchema), authController.refreshToken);
 
 // Logout user
 authRegistry.registerPath({
@@ -76,7 +78,7 @@ authRegistry.registerPath({
 	request: { body: { content: { "application/json": { schema: LogoutRequestSchema.shape.body } } } },
 	responses: createApiResponse(LogoutResponseSchema, "Success", 200),
 });
-authRouter.post("/logout", requireAuth, validateRequest(LogoutRequestSchema), authController.logout);
+authRouter.post("/logout", validateRequest(LogoutRequestSchema), authController.logout);
 
 // Update Profile
 authRegistry.registerPath({
@@ -123,3 +125,23 @@ authRegistry.registerPath({
 	responses: createApiResponse(GetCurrentUserResponseSchema, "Success", 200),
 });
 authRouter.get("/user", requireAuth, authController.getCurrentUser);
+
+// Login with Google
+authRegistry.registerPath({
+	method: "post",
+	path: "/api/auth/google",
+	tags: ["Auth"],
+	request: { body: { content: { "application/json": { schema: GoogleLoginRequestSchema.shape.body } } } },
+	responses: createApiResponse(LoginResponseSchema, "Success", 200),
+});
+authRouter.post("/google", validateRequest(GoogleLoginRequestSchema), authController.loginWithGoogle);
+
+// Login with GitHub
+authRegistry.registerPath({
+	method: "post",
+	path: "/api/auth/github",
+	tags: ["Auth"],
+	request: { body: { content: { "application/json": { schema: GitHubLoginRequestSchema.shape.body } } } },
+	responses: createApiResponse(LoginResponseSchema, "Success", 200),
+});
+authRouter.post("/github", validateRequest(GitHubLoginRequestSchema), authController.loginWithGitHub);

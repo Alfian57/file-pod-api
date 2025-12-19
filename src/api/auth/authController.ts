@@ -56,6 +56,18 @@ class AuthController {
 		const serviceResponse = await authService.getCurrentUser(userId);
 		res.status(serviceResponse.statusCode).send(serviceResponse);
 	};
+
+	public loginWithGoogle: RequestHandler = async (req: Request, res: Response) => {
+		const { idToken } = req.body;
+		const serviceResponse = await authService.loginWithGoogle(idToken);
+		res.status(serviceResponse.statusCode).send(serviceResponse);
+	};
+
+	public loginWithGitHub: RequestHandler = async (req: Request, res: Response) => {
+		const { code } = req.body;
+		const serviceResponse = await authService.loginWithGitHub(code);
+		res.status(serviceResponse.statusCode).send(serviceResponse);
+	};
 }
 
 export const authController = new AuthController();

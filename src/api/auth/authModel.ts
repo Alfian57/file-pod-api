@@ -78,3 +78,19 @@ export const GetCurrentUserResponseSchema = z.object({
 	storageUsedBytes: z.number().optional(),
 });
 export type GetCurrentUserResponseData = z.infer<typeof GetCurrentUserResponseSchema>;
+
+// OAuth - Google Login
+export const GoogleLoginRequestSchema = z.object({
+	body: z.object({
+		idToken: z.string().min(1, "Google ID token is required"),
+	}),
+});
+export type GoogleLoginResponseData = LoginResponseData;
+
+// OAuth - GitHub Login
+export const GitHubLoginRequestSchema = z.object({
+	body: z.object({
+		code: z.string().min(1, "GitHub authorization code is required"),
+	}),
+});
+export type GitHubLoginResponseData = LoginResponseData;

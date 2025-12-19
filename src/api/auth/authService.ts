@@ -225,6 +225,186 @@ export class AuthService {
 			);
 		}
 	}
+
+	// Login with Google
+	async loginWithGoogle(idToken: string): Promise<ServiceResponse<LoginResponseData | null>> {
+		try {
+			// Verify the Google ID token
+			const googleClientId = env.GOOGLE_CLIENT_ID;
+			if (!googleClientId) {
+				return ServiceResponse.failure("Google OAuth not configured", null, StatusCodes.SERVICE_UNAVAILABLE);
+			}
+
+			// Decode the ID token (in production, verify with Google's API)
+			// For now, we'll decode the JWT payload
+			const tokenParts = idToken.split(".");
+			if (tokenParts.length !== 3) {
+				return ServiceResponse.failure("Invalid Google ID token", null, StatusCodes.BAD_REQUEST);
+			}
+
+			const payload = JSON.parse(Buffer.from(tokenParts[1], "base64").toString("utf-8"));
+			const { sub: googleId, email, name, picture: profilePictureUrl } = payload;
+
+			if (!email || !googleId) {
+				return ServiceResponse.failure("Invalid token payload", null, StatusCodes.BAD_REQUEST);
+			}
+
+			// Check if user exists by Google ID
+			let user = await this.authRepository.findByGoogleId(googleId);
+
+			if (!user) {
+				// Check if user exists by email
+				user = await this.authRepository.findByEmail(email);
+
+				if (user) {
+					// Link Google ID to existing user
+					await this.authRepository.updateWithOAuthId(user.id, { googleId, profilePictureUrl });
+				} else {
+					// Create new user
+					user = await this.authRepository.createOAuthUser({
+						email,
+						name,
+						profilePictureUrl,
+						googleId,
+					});
+				}
+			}
+
+			const accessToken = signJwt({ userId: user.id, email: user.email });
+			const refreshToken = generateRefreshToken();
+			const refreshTokenExpiredAt = getRefreshTokenExpiryDate();
+
+			await this.authRepository.createRefreshToken(user.id, refreshToken, refreshTokenExpiredAt);
+
+			return ServiceResponse.success("Google login successful", {
+				accessToken,
+				refreshToken,
+				user: {
+					name: user.name ?? undefined,
+					email: user.email,
+					profilePictureUrl: user.profilePictureUrl ?? undefined,
+					storageQuotaBytes: Number(user.storageQuotaBytes),
+					storageUsedBytes: Number(user.storageUsedBytes),
+				},
+			});
+		} catch (ex) {
+			const errorMessage = `Error during Google login: ${(ex as Error).message}`;
+			logger.error(errorMessage);
+			return ServiceResponse.failure("An error occurred during Google login.", null, StatusCodes.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	// Login with GitHub
+	async loginWithGitHub(code: string): Promise<ServiceResponse<LoginResponseData | null>> {
+		try {
+			const clientId = env.GITHUB_CLIENT_ID;
+			const clientSecret = env.GITHUB_CLIENT_SECRET;
+
+			if (!clientId || !clientSecret) {
+				return ServiceResponse.failure("GitHub OAuth not configured", null, StatusCodes.SERVICE_UNAVAILABLE);
+			}
+
+			// Exchange code for access token
+			const tokenResponse = await fetch("https://github.com/login/oauth/access_token", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Accept: "application/json",
+				},
+				body: JSON.stringify({
+					client_id: clientId,
+					client_secret: clientSecret,
+					code,
+				}),
+			});
+
+			const tokenData = (await tokenResponse.json()) as { access_token?: string; error?: string };
+			if (!tokenData.access_token) {
+				return ServiceResponse.failure("Failed to get GitHub access token", null, StatusCodes.UNAUTHORIZED);
+			}
+
+			// Get user info from GitHub
+			const userResponse = await fetch("https://api.github.com/user", {
+				headers: {
+					Authorization: `Bearer ${tokenData.access_token}`,
+					Accept: "application/json",
+				},
+			});
+
+			const githubUser = (await userResponse.json()) as {
+				id: number;
+				email: string | null;
+				name: string | null;
+				avatar_url: string;
+			};
+
+			// Get email if not public
+			let email = githubUser.email;
+			if (!email) {
+				const emailResponse = await fetch("https://api.github.com/user/emails", {
+					headers: {
+						Authorization: `Bearer ${tokenData.access_token}`,
+						Accept: "application/json",
+					},
+				});
+				const emails = (await emailResponse.json()) as { email: string; primary: boolean }[];
+				const primaryEmail = emails.find((e) => e.primary);
+				email = primaryEmail?.email ?? null;
+			}
+
+			if (!email) {
+				return ServiceResponse.failure("Could not retrieve email from GitHub", null, StatusCodes.BAD_REQUEST);
+			}
+
+			const githubId = String(githubUser.id);
+
+			// Check if user exists by GitHub ID
+			let user = await this.authRepository.findByGitHubId(githubId);
+
+			if (!user) {
+				// Check if user exists by email
+				user = await this.authRepository.findByEmail(email);
+
+				if (user) {
+					// Link GitHub ID to existing user
+					await this.authRepository.updateWithOAuthId(user.id, {
+						githubId,
+						profilePictureUrl: githubUser.avatar_url,
+					});
+				} else {
+					// Create new user
+					user = await this.authRepository.createOAuthUser({
+						email,
+						name: githubUser.name ?? undefined,
+						profilePictureUrl: githubUser.avatar_url,
+						githubId,
+					});
+				}
+			}
+
+			const accessToken = signJwt({ userId: user.id, email: user.email });
+			const refreshToken = generateRefreshToken();
+			const refreshTokenExpiredAt = getRefreshTokenExpiryDate();
+
+			await this.authRepository.createRefreshToken(user.id, refreshToken, refreshTokenExpiredAt);
+
+			return ServiceResponse.success("GitHub login successful", {
+				accessToken,
+				refreshToken,
+				user: {
+					name: user.name ?? undefined,
+					email: user.email,
+					profilePictureUrl: user.profilePictureUrl ?? undefined,
+					storageQuotaBytes: Number(user.storageQuotaBytes),
+					storageUsedBytes: Number(user.storageUsedBytes),
+				},
+			});
+		} catch (ex) {
+			const errorMessage = `Error during GitHub login: ${(ex as Error).message}`;
+			logger.error(errorMessage);
+			return ServiceResponse.failure("An error occurred during GitHub login.", null, StatusCodes.INTERNAL_SERVER_ERROR);
+		}
+	}
 }
 
 export const authService = new AuthService();

@@ -31,6 +31,11 @@ const envSchema = z.object({
 		return val;
 	}, z.boolean().default(false)),
 	MINIO_BUCKET_NAME: z.string().min(1).default("file-pod-bucket"),
+
+	// OAuth Configuration
+	GOOGLE_CLIENT_ID: z.string().optional(),
+	GITHUB_CLIENT_ID: z.string().optional(),
+	GITHUB_CLIENT_SECRET: z.string().optional(),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
