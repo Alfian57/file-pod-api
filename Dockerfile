@@ -39,8 +39,8 @@ COPY --from=build --chown=node:node /app/package.json ./
 # Install Prisma CLI globally for migrations
 RUN npm install -g prisma
 
-# Create a migration script
-RUN echo '#!/bin/sh\nprisma migrate deploy' > /app/migrate.sh && chmod +x /app/migrate.sh
+# Create a migration script with proper shebang for Alpine
+RUN printf '#!/bin/sh\nprisma migrate deploy\n' > /app/migrate.sh && chmod +x /app/migrate.sh
 
 # Use the node user from the image
 USER node
