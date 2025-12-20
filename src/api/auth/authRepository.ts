@@ -21,9 +21,18 @@ export class AuthRepository {
 	}
 
 	async updateById(id: string, data: { name?: string; profilePicture?: string; password?: string }): Promise<void> {
+		const updateData: any = {
+			name: data.name,
+			password: data.password,
+		};
+
+		if (data.profilePicture !== undefined) {
+			updateData.profilePictureUrl = data.profilePicture;
+		}
+
 		await prisma.user.update({
 			where: { id },
-			data,
+			data: updateData,
 		});
 	}
 

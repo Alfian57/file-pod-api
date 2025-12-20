@@ -67,4 +67,8 @@ sharedRegistry.registerPath({
 		},
 	},
 });
-sharedRouter.get("/:token", validateRequest(GetSharedRequestSchema), sharedController.downloadByToken);
+// Render shared page (HTML)
+sharedRouter.get("/:token", sharedController.renderSharedPage);
+
+// Handle download (Form POST)
+sharedRouter.post("/:token/download", sharedController.handleDownload);

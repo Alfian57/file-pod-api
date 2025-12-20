@@ -57,6 +57,47 @@ export class SharedService {
 		}
 	}
 
+	async getSharedLinkMeta(token: string): Promise<ServiceResponse<any | null>> {
+		try {
+			const link = await sharedRepository.findByToken(token);
+			if (!link) return ServiceResponse.failure("Link not found", null, StatusCodes.NOT_FOUND);
+
+			const isPasswordProtected = !!link.password;
+			let name = "Unknown Content";
+			let type = "unknown";
+			let size = "0";
+
+			if (link.fileId && link.file) {
+				name = link.file.originalName;
+				type = "file";
+				size = link.file.sizeBytes ? link.file.sizeBytes.toString() : "0";
+			} else if (link.folderId && link.folder) {
+				name = link.folder.name;
+				type = "folder";
+			}
+
+			// If text is strictly "Protected Content" if password, uncomment below.
+			// For now, showing name is better UX.
+
+			return ServiceResponse.success(
+				"Link info",
+				{
+					token: link.linkToken,
+					isPasswordProtected,
+					name,
+					type,
+					size,
+					ownerName: link.user?.name ?? "Someone",
+				},
+				StatusCodes.OK,
+			);
+		} catch (ex: unknown) {
+			const message = ex instanceof Error ? ex.message : String(ex);
+			logger.error(`Error getting shared link meta: ${message}`);
+			return ServiceResponse.failure("An error occurred", null, StatusCodes.INTERNAL_SERVER_ERROR);
+		}
+	}
+
 	// helper to get object stream from minio
 	async getObjectStream(objectName: string): Promise<Readable> {
 		return minioClient.getObject(env.MINIO_BUCKET_NAME, objectName) as Promise<Readable>;

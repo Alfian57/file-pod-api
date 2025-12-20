@@ -49,6 +49,7 @@ model Folder {
   name             String
   userId           String
   parentFolderId   String?
+  color            String?
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
   

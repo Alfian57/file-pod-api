@@ -6,11 +6,13 @@ class StorageController {
 	public getStorage: RequestHandler = async (req: Request, res: Response) => {
 		const userId = req.user?.userId;
 		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
-		const { sortBy, sortOrder } = req.query;
+		const { sortBy, sortOrder, search, type } = req.query;
 		const serviceResponse = await storageService.getStorage(
 			userId,
 			sortBy as "name" | "createdAt" | undefined,
 			sortOrder as "asc" | "desc" | undefined,
+			search as string | undefined,
+			type as string | undefined,
 		);
 		res.status(serviceResponse.statusCode).send(serviceResponse);
 	};
@@ -19,11 +21,13 @@ class StorageController {
 		const userId = req.user?.userId;
 		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
 		const { id } = req.params;
-		const { sortBy, sortOrder } = req.query;
+		const { sortBy, sortOrder, search, type } = req.query;
 		const serviceResponse = await storageService.getStorageDetail(
 			id,
 			sortBy as "name" | "createdAt" | undefined,
 			sortOrder as "asc" | "desc" | undefined,
+			search as string | undefined,
+			type as string | undefined,
 		);
 		res.status(serviceResponse.statusCode).send(serviceResponse);
 	};
@@ -31,9 +35,9 @@ class StorageController {
 	public createFolder: RequestHandler = async (req: Request, res: Response) => {
 		const userId = req.user?.userId;
 		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
-		const { name, parentFolderId } = req.body;
+		const { name, parentFolderId, color } = req.body;
 
-		const serviceResponse = await storageService.createFolder(userId, name, parentFolderId);
+		const serviceResponse = await storageService.createFolder(userId, name, parentFolderId, color);
 		return res.status(serviceResponse.statusCode).send(serviceResponse);
 	};
 
@@ -122,6 +126,26 @@ class StorageController {
 		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
 
 		const serviceResponse = await storageService.getStorageStatistics(userId);
+		return res.status(serviceResponse.statusCode).send(serviceResponse);
+	};
+
+	public renameFolder: RequestHandler = async (req: Request, res: Response) => {
+		const userId = req.user?.userId;
+		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
+		const { id } = req.params;
+		const { name } = req.body;
+
+		const serviceResponse = await storageService.renameFolder(id, name);
+		return res.status(serviceResponse.statusCode).send(serviceResponse);
+	};
+
+	public renameFile: RequestHandler = async (req: Request, res: Response) => {
+		const userId = req.user?.userId;
+		if (!userId) return res.status(401).send({ message: "Unauthorized", data: null });
+		const { id } = req.params;
+		const { name } = req.body;
+
+		const serviceResponse = await storageService.renameFile(id, name);
 		return res.status(serviceResponse.statusCode).send(serviceResponse);
 	};
 }

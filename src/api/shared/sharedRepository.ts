@@ -6,7 +6,7 @@ export class SharedRepository {
 	async findByToken(token: string) {
 		return prisma.sharedLink.findUnique({
 			where: { linkToken: token },
-			include: { file: true, folder: true },
+			include: { file: true, folder: true, user: true },
 		});
 	}
 

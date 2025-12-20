@@ -12,6 +12,8 @@ import type {
 	GetStorageDetailResponseData,
 	GetStorageResponseData,
 	GetStorageStatisticsResponseData,
+	RenameFileResponseData,
+	RenameFolderResponseData,
 	ShareFileResponseData,
 	ShareFolderResponseData,
 	UploadFileResponseData,
@@ -28,12 +30,19 @@ export class StorageService {
 		userId: string,
 		sortBy: "name" | "createdAt" = "createdAt",
 		sortOrder: "asc" | "desc" = "asc",
+		search?: string,
+		type?: string,
 	): Promise<ServiceResponse<GetStorageResponseData | null>> {
 		try {
-			const result = await this.storageRepository.findStorageByUserId(userId, sortBy, sortOrder);
+			const result = await this.storageRepository.findStorageByUserId(userId, sortBy, sortOrder, search, type);
 
 			const mapped = {
-				folders: result.folders.map((f) => ({ id: f.id, name: f.name, createdAt: f.createdAt.toISOString() })),
+				folders: result.folders.map((f) => ({
+					id: f.id,
+					name: f.name,
+					createdAt: f.createdAt.toISOString(),
+					color: f.color,
+				})),
 				files: result.files.map((fi) => ({
 					id: fi.id,
 					originalName: fi.originalName,
@@ -56,11 +65,18 @@ export class StorageService {
 		id: string,
 		sortBy: "name" | "createdAt" = "createdAt",
 		sortOrder: "asc" | "desc" = "asc",
+		search?: string,
+		type?: string,
 	): Promise<ServiceResponse<GetStorageDetailResponseData | null>> {
 		try {
-			const result = await this.storageRepository.findStorageByIdWithContent(id, sortBy, sortOrder);
+			const result = await this.storageRepository.findStorageByIdWithContent(id, sortBy, sortOrder, search, type);
 			const mapped = {
-				folders: result.folders.map((f) => ({ id: f.id, name: f.name, createdAt: f.createdAt.toISOString() })),
+				folders: result.folders.map((f) => ({
+					id: f.id,
+					name: f.name,
+					createdAt: f.createdAt.toISOString(),
+					color: f.color,
+				})),
 				files: result.files.map((fi) => ({
 					id: fi.id,
 					originalName: fi.originalName,
@@ -68,6 +84,12 @@ export class StorageService {
 					mimeType: fi.mimeType,
 					sizeBytes: fi.sizeBytes != null ? String(fi.sizeBytes) : null,
 					createdAt: fi.createdAt.toISOString(),
+				})),
+				ancestors: result.ancestors.map((f) => ({
+					id: f.id,
+					name: f.name,
+					createdAt: f.createdAt.toISOString(),
+					color: f.color,
 				})),
 			};
 			return ServiceResponse.success("Folder fetched", mapped, StatusCodes.OK);
@@ -86,6 +108,7 @@ export class StorageService {
 		userId: string,
 		name: string,
 		parentFolderId: string | null,
+		color?: string,
 	): Promise<ServiceResponse<CreateFolderResponseData | null>> {
 		try {
 			const normalizedParentId =
@@ -100,7 +123,7 @@ export class StorageService {
 				}
 			}
 
-			await this.storageRepository.createFolder(userId, name, normalizedParentId);
+			await this.storageRepository.createFolder(userId, name, normalizedParentId, color);
 			return ServiceResponse.success("Folder created", null, StatusCodes.CREATED);
 		} catch (ex) {
 			const errorMessage = `Error creating folder: ${(ex as Error).message}`;
@@ -345,6 +368,46 @@ export class StorageService {
 				null,
 				StatusCodes.INTERNAL_SERVER_ERROR,
 			);
+		}
+	}
+
+	async renameFolder(id: string, name: string): Promise<ServiceResponse<RenameFolderResponseData | null>> {
+		try {
+			const folder = await this.storageRepository.renameFolder(id, name);
+			if (!folder) return ServiceResponse.failure("Folder not found", null, StatusCodes.NOT_FOUND);
+
+			const mapped = {
+				id: folder.id,
+				name: folder.name,
+				createdAt: folder.createdAt.toISOString(),
+				color: folder.color,
+			};
+			return ServiceResponse.success("Folder renamed", mapped, StatusCodes.OK);
+		} catch (ex) {
+			const errorMessage = `Error renaming folder: ${(ex as Error).message}`;
+			logger.error(errorMessage);
+			return ServiceResponse.failure("An error occurred renaming folder.", null, StatusCodes.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	async renameFile(id: string, name: string): Promise<ServiceResponse<RenameFileResponseData | null>> {
+		try {
+			const file = await this.storageRepository.renameFile(id, name);
+			if (!file) return ServiceResponse.failure("File not found", null, StatusCodes.NOT_FOUND);
+
+			const mapped = {
+				id: file.id,
+				originalName: file.originalName,
+				filename: file.filename,
+				mimeType: file.mimeType,
+				sizeBytes: file.sizeBytes?.toString() ?? null,
+				createdAt: file.createdAt.toISOString(),
+			};
+			return ServiceResponse.success("File renamed", mapped, StatusCodes.OK);
+		} catch (ex) {
+			const errorMessage = `Error renaming file: ${(ex as Error).message}`;
+			logger.error(errorMessage);
+			return ServiceResponse.failure("An error occurred renaming file.", null, StatusCodes.INTERNAL_SERVER_ERROR);
 		}
 	}
 }

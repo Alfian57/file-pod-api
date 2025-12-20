@@ -9,6 +9,7 @@ import rateLimiter from "@/common/middleware/rateLimiter";
 import requestLogger from "@/common/middleware/requestLogger";
 import { env } from "@/common/utils/envConfig";
 import { authRouter } from "./api/auth/authRouter";
+import { mediaRouter } from "./api/media/mediaRouter";
 import { sharedRouter } from "./api/shared/sharedRouter";
 import { storageRouter } from "./api/storage/storageRouter";
 
@@ -32,6 +33,7 @@ app.use(requestLogger);
 app.use("/health-check", healthCheckRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/my-storage", storageRouter);
+app.use("/media", mediaRouter);
 app.use("/shared", sharedRouter);
 
 // Swagger UI

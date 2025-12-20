@@ -21,6 +21,10 @@ import {
 	GetStorageResponseSchema,
 	GetStorageStatisticsRequestSchema,
 	GetStorageStatisticsResponseSchema,
+	RenameFileRequestSchema,
+	RenameFileResponseSchema,
+	RenameFolderRequestSchema,
+	RenameFolderResponseSchema,
 	ShareFileRequestSchema,
 	ShareFileResponseSchema,
 	ShareFolderRequestSchema,
@@ -249,4 +253,42 @@ storageRouter.post(
 	requireAuth,
 	validateRequest(ShareFolderRequestSchema),
 	storageController.shareFolder,
+);
+
+// Rename folder
+storageRegistry.registerPath({
+	method: "patch",
+	path: "/api/my-storage/folder/{id}/rename",
+	tags: ["Storage"],
+	security: [{ [bearerAuth.name]: [] }],
+	request: {
+		params: RenameFolderRequestSchema.shape.params,
+		body: { content: { "application/json": { schema: RenameFolderRequestSchema.shape.body } } },
+	},
+	responses: createApiResponse(RenameFolderResponseSchema, "Success"),
+});
+storageRouter.patch(
+	"/folder/:id/rename",
+	requireAuth,
+	validateRequest(RenameFolderRequestSchema),
+	storageController.renameFolder,
+);
+
+// Rename file
+storageRegistry.registerPath({
+	method: "patch",
+	path: "/api/my-storage/file/{id}/rename",
+	tags: ["Storage"],
+	security: [{ [bearerAuth.name]: [] }],
+	request: {
+		params: RenameFileRequestSchema.shape.params,
+		body: { content: { "application/json": { schema: RenameFileRequestSchema.shape.body } } },
+	},
+	responses: createApiResponse(RenameFileResponseSchema, "Success"),
+});
+storageRouter.patch(
+	"/file/:id/rename",
+	requireAuth,
+	validateRequest(RenameFileRequestSchema),
+	storageController.renameFile,
 );

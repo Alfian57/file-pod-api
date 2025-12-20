@@ -15,7 +15,12 @@ export const FileSummarySchema = z.object({
 export type FileSummary = z.infer<typeof FileSummarySchema>;
 
 // General foldedr response schemas
-export const FolderSummarySchema = z.object({ id: z.string(), name: z.string(), createdAt: z.string() });
+export const FolderSummarySchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	createdAt: z.string(),
+	color: z.string().nullable().optional(),
+});
 export type FolderSummary = z.infer<typeof FolderSummarySchema>;
 
 // Sorting schemas
@@ -27,6 +32,8 @@ export const GetStorageRequestSchema = z.object({
 	query: z.object({
 		sortBy: SortBySchema.optional(),
 		sortOrder: SortOrderSchema.optional(),
+		search: z.string().optional(),
+		type: z.string().optional(),
 	}),
 });
 export const GetStorageResponseSchema = z.object({
@@ -41,11 +48,14 @@ export const GetStorageDetailRequestSchema = z.object({
 	query: z.object({
 		sortBy: SortBySchema.optional(),
 		sortOrder: SortOrderSchema.optional(),
+		search: z.string().optional(),
+		type: z.string().optional(),
 	}),
 });
 export const GetStorageDetailResponseSchema = z.object({
 	folders: z.array(FolderSummarySchema),
 	files: z.array(FileSummarySchema),
+	ancestors: z.array(FolderSummarySchema),
 });
 export type GetStorageDetailResponseData = z.infer<typeof GetStorageDetailResponseSchema>;
 
@@ -68,6 +78,7 @@ export const CreateFolderRequestSchema = z.object({
 			if (v === "" || v === "null" || v === null || typeof v === "undefined") return null;
 			return v;
 		}, z.string().uuid().nullable()),
+		color: z.string().optional(),
 	}),
 });
 export const CreateFolderResponseSchema = z.null();
@@ -98,6 +109,22 @@ export const DeleteFileRequestSchema = z.object({
 });
 export const DeleteFileResponseSchema = z.null();
 export type DeleteFileResponseData = z.infer<typeof DeleteFileResponseSchema>;
+
+// Rename Folder
+export const RenameFolderRequestSchema = z.object({
+	params: z.object({ id: z.string().uuid() }),
+	body: z.object({ name: z.string().min(1) }),
+});
+export const RenameFolderResponseSchema = FolderSummarySchema;
+export type RenameFolderResponseData = z.infer<typeof RenameFolderResponseSchema>;
+
+// Rename File
+export const RenameFileRequestSchema = z.object({
+	params: z.object({ id: z.string().uuid() }),
+	body: z.object({ name: z.string().min(1) }),
+});
+export const RenameFileResponseSchema = FileSummarySchema;
+export type RenameFileResponseData = z.infer<typeof RenameFileResponseSchema>;
 
 // Download File
 export const DownloadFileRequestSchema = z.object({
