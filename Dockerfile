@@ -39,8 +39,9 @@ COPY --from=build --chown=node:node /app/package.json ./
 # Install Prisma CLI globally for migrations
 RUN npm install -g prisma
 
-# Create a migration script with proper shebang for Alpine
-RUN printf '#!/bin/sh\nprisma migrate deploy\n' > /app/migrate.sh && chmod +x /app/migrate.sh
+# Copy entrypoint script
+COPY --chown=node:node entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
 
 # Use the node user from the image
 USER node
@@ -48,5 +49,10 @@ USER node
 # Expose port 8080
 EXPOSE 8080
 
-# Default command - start the server
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
+
+# Run with entrypoint
+ENTRYPOINT ["./entrypoint.sh"]
 CMD ["node", "dist/index.cjs"]
